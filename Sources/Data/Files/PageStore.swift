@@ -9,7 +9,7 @@ public enum PageStoreError: Error, Equatable, Sendable {
     case decodingFailed(PageID)
 }
 
-public protocol PageStoreProtocol: Sendable {
+public protocol PageStoreProtocol: PageImageSource {
     func storeOriginal(_ image: CGImage, for id: PageID) async throws -> URL
     func original(for id: PageID) async throws -> CGImage
     func thumbnail(for id: PageID) async throws -> CGImage
@@ -62,6 +62,12 @@ public struct PageStore: PageStoreProtocol {
 
     public func original(for id: PageID) async throws -> CGImage {
         try read(from: originalURL(for: id), pageID: id)
+    }
+
+    /// Тот же оригинал под именем, которым его спрашивают сборка файла
+    /// и распознавание: им не нужно знать, что источник — диск.
+    public func image(for id: PageID) async throws -> CGImage {
+        try await original(for: id)
     }
 
     public func thumbnail(for id: PageID) async throws -> CGImage {

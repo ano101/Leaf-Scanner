@@ -1,0 +1,93 @@
+import CoreGraphics
+import Foundation
+import Testing
+@testable import Leaf
+
+@Suite("Фоновое распознавание")
+struct TextRecognitionWorkerTests {
+    private struct Context {
+        let worker: TextRecognitionWorker
+        let documents: DocumentRepository
+        let search: SearchIndex
+        let importer: ScanImporter
+        let root: URL
+    }
+
+    private func makeContext() throws -> Context {
+        let root = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("leaf-ocr-\(UUID().uuidString)")
+        let store = try PageStore(root: root)
+        let database = try AppDatabase.inMemory()
+        let documents = DocumentRepository(database: database)
+
+        return Context(
+            worker: TextRecognitionWorker(
+                images: store,
+                recognizer: TextRecognizer(),
+                documents: documents
+            ),
+            documents: documents,
+            search: SearchIndex(database: database),
+            importer: ScanImporter(store: store),
+            root: root
+        )
+    }
+
+    @Test("распознанный текст доходит до документа и до поиска")
+    func recognizedTextReachesDocumentAndSearch() async throws {
+        let context = try makeContext()
+        defer { try? FileManager.default.removeItem(at: context.root) }
+
+        let pages = try await context.importer.makePages(from: [ImageFactory.text("ДОГОВОР")])
+        let document = Document(name: "Скан", pages: pages)
+        try await context.documents.save(document)
+
+        try await context.worker.process(documentID: document.id)
+
+        let stored = try #require(try await context.documents.document(document.id))
+        #expect(stored.pages.first?.recognizedText?.isEmpty == false)
+        #expect(try await context.search.search("договор", limit: 10).isEmpty == false)
+    }
+
+    @Test("страница с уже распознанным текстом заново не обрабатывается")
+    func alreadyRecognizedPageIsNotProcessedAgain() async throws {
+        let context = try makeContext()
+        defer { try? FileManager.default.removeItem(at: context.root) }
+
+        var pages = try await context.importer.makePages(from: [ImageFactory.text("СЧЁТ")])
+        pages[0].recognizedText = "уже разобрано"
+        let document = Document(name: "Скан", pages: pages)
+        try await context.documents.save(document)
+
+        try await context.worker.process(documentID: document.id)
+
+        let stored = try #require(try await context.documents.document(document.id))
+        #expect(stored.pages.first?.recognizedText == "уже разобрано")
+    }
+
+    @Test("нераспознаваемая страница не ломает документ")
+    func unreadablePageDoesNotBreakTheDocument() async throws {
+        let context = try makeContext()
+        defer { try? FileManager.default.removeItem(at: context.root) }
+
+        let pages = try await context.importer.makePages(from: [
+            ImageFactory.solid(width: 400, height: 300, gray: 1.0),
+        ])
+        let document = Document(name: "Пустой лист", pages: pages)
+        try await context.documents.save(document)
+
+        try await context.worker.process(documentID: document.id)
+
+        let stored = try #require(try await context.documents.document(document.id))
+        #expect(stored.pages.count == 1)
+        #expect(stored.name == "Пустой лист")
+    }
+
+    @Test("отсутствующий документ не роняет работника")
+    func missingDocumentDoesNotCrashTheWorker() async throws {
+        let context = try makeContext()
+        defer { try? FileManager.default.removeItem(at: context.root) }
+
+        try await context.worker.process(documentID: DocumentID())
+    }
+}
