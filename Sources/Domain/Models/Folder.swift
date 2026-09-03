@@ -2,7 +2,7 @@ import Foundation
 
 public typealias FolderID = Identifier<Folder>
 
-public struct Folder: Identifiable, Equatable, Sendable {
+public struct Folder: Identifiable, Hashable, Sendable {
     public let id: FolderID
     public var name: String
     public var parentID: FolderID?

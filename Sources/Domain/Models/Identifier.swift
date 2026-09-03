@@ -11,6 +11,12 @@ public struct Identifier<Subject>: Hashable, Sendable, Codable {
     }
 }
 
+/// Идентификатор опознаётся сам собой: этого ждут списки и модальные окна,
+/// которым нужен `Identifiable`, а не сам объект.
+extension Identifier: Identifiable {
+    public var id: Self { self }
+}
+
 extension Identifier: CustomStringConvertible {
     public var description: String { raw.uuidString }
 }

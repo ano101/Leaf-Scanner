@@ -2,7 +2,7 @@ import Foundation
 
 public typealias DocumentID = Identifier<Document>
 
-public struct Document: Identifiable, Equatable, Sendable {
+public struct Document: Identifiable, Hashable, Sendable {
     public let id: DocumentID
     public var name: String
     public var folderID: FolderID?

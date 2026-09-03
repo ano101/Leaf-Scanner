@@ -3,7 +3,7 @@ public typealias PageID = Identifier<Page>
 /// Страница — это исходный кадр плюс намерения человека: как повернуть,
 /// где обрезать, что закрыть. Сам кадр не меняется никогда, поэтому любую
 /// правку можно отменить, а экспорт всегда идёт от оригинала.
-public struct Page: Identifiable, Equatable, Sendable, Codable {
+public struct Page: Identifiable, Hashable, Sendable, Codable {
     public let id: PageID
     public var order: Int
     public var rotation: Rotation

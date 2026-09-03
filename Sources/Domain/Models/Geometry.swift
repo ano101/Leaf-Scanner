@@ -1,7 +1,7 @@
 /// Геометрия домена задана в долях от размера страницы, а не в пикселях.
 /// Поэтому обрезка и замазка переживают смену разрешения при экспорте
 /// и не зависят от CoreGraphics.
-public struct NormalizedPoint: Equatable, Sendable, Codable {
+public struct NormalizedPoint: Hashable, Sendable, Codable {
     public let x: Double
     public let y: Double
 
@@ -11,7 +11,7 @@ public struct NormalizedPoint: Equatable, Sendable, Codable {
     }
 }
 
-public struct NormalizedRect: Equatable, Sendable, Codable {
+public struct NormalizedRect: Hashable, Sendable, Codable {
     public let x: Double
     public let y: Double
     public let width: Double
@@ -34,7 +34,7 @@ public struct NormalizedRect: Equatable, Sendable, Codable {
 
 /// Четыре угла листа на кадре. Углы хранятся отдельно, а не прямоугольником,
 /// потому что снятый лист почти всегда трапеция.
-public struct NormalizedQuad: Equatable, Sendable, Codable {
+public struct NormalizedQuad: Hashable, Sendable, Codable {
     public let topLeft: NormalizedPoint
     public let topRight: NormalizedPoint
     public let bottomRight: NormalizedPoint

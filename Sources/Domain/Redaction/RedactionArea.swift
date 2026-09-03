@@ -1,6 +1,6 @@
 /// Область, которую нужно уничтожить при выходе файла наружу.
 /// Внутри приложения замазка обратима, в экспортированном файле — нет.
-public struct RedactionArea: Equatable, Sendable, Codable, Identifiable {
+public struct RedactionArea: Hashable, Sendable, Codable, Identifiable {
     public let id: Identifier<RedactionArea>
     public let rect: NormalizedRect
 

@@ -2,7 +2,7 @@ public typealias TagID = Identifier<Tag>
 
 /// Цвет метки хранится ключом справочника, а не значением: палитра
 /// меняется без миграции данных.
-public struct Tag: Identifiable, Equatable, Sendable {
+public struct Tag: Identifiable, Hashable, Sendable {
     public let id: TagID
     public var name: String
     public var colorKey: String
