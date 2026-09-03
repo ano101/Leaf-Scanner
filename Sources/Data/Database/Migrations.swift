@@ -55,6 +55,17 @@ extension AppDatabase {
             }
         }
 
+        migrator.registerMigration("v2_search") { db in
+            // Индекс синхронизируется триггерами, которые заводит GRDB:
+            // второго источника правды не появляется, и текст не может
+            // разойтись с содержимым страницы при любом сбое.
+            try db.create(virtualTable: "pageSearch", using: FTS5()) { table in
+                table.synchronize(withTable: "page")
+                table.column("recognizedText")
+                table.tokenizer = .unicode61()
+            }
+        }
+
         return migrator
     }
 }
