@@ -55,4 +55,35 @@ enum ImageFactory {
         }
         return image
     }
+
+    /// Мелкая рябь: такое изображение сжимается заметно хуже однотонного,
+    /// поэтому по нему проверяется поиск самой тяжёлой страницы.
+    static func noisy(width: Int, height: Int) -> CGImage {
+        let context = CGContext(
+            data: nil,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: 0,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue
+        )
+        guard let context else {
+            preconditionFailure("не удалось создать контекст рисования для теста")
+        }
+
+        var generator = SystemRandomNumberGenerator()
+        for y in stride(from: 0, to: height, by: 2) {
+            for x in stride(from: 0, to: width, by: 2) {
+                let value = Double.random(in: 0...1, using: &generator)
+                context.setFillColor(CGColor(red: value, green: value, blue: value, alpha: 1))
+                context.fill(CGRect(x: x, y: y, width: 2, height: 2))
+            }
+        }
+
+        guard let image = context.makeImage() else {
+            preconditionFailure("не удалось получить изображение из контекста")
+        }
+        return image
+    }
 }

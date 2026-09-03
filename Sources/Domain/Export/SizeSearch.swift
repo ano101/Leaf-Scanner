@@ -8,14 +8,24 @@ public enum SizeSearch {
     public static let maxMeasurements = 6
 
     /// Единственная ручка подбора: 0 — максимальное сжатие, 1 — нетронутый файл.
+    ///
+    /// Нижняя граница выбрана низкой нарочно: документ, ужатый до нечитаемости,
+    /// человек хотя бы увидит и переспросит, а недостижимый предел не оставляет
+    /// ему вообще ничего.
     /// Качество и масштаб растут вместе с ней, поэтому вес монотонен
     /// и двоичный поиск применим.
     private static func plan(at knob: Double, colorMode: ColorMode) -> ExportPlan {
         ExportPlan(
-            quality: 0.2 + 0.8 * knob,
-            scale: 0.35 + 0.65 * knob,
+            quality: 0.1 + 0.9 * knob,
+            scale: 0.15 + 0.85 * knob,
             colorMode: colorMode
         )
+    }
+
+    /// Самый сжатый вариант из возможных. Нужен как последняя попытка,
+    /// когда оценка по пробам разошлась с настоящим весом.
+    public static func smallestPlan(colorMode: ColorMode) -> ExportPlan {
+        plan(at: 0.0, colorMode: colorMode)
     }
 
     public static func fit(
