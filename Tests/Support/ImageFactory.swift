@@ -127,4 +127,34 @@ enum ImageFactory {
         }
         return image
     }
+
+    /// Горизонтальный переход от тёмного к светлому с общим множителем яркости.
+    /// Нужен, чтобы отличать «тот же лист при другом освещении» от другого листа.
+    static func gradient(width: Int, height: Int, brightness: Double = 1.0) -> CGImage {
+        let context = CGContext(
+            data: nil,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: 0,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue
+        )
+        guard let context else {
+            preconditionFailure("не удалось создать контекст рисования для теста")
+        }
+
+        let steps = 32
+        for step in 0..<steps {
+            let value = min(1.0, Double(step) / Double(steps - 1) * brightness)
+            context.setFillColor(CGColor(red: value, green: value, blue: value, alpha: 1))
+            let stripe = CGFloat(width) / CGFloat(steps)
+            context.fill(CGRect(x: CGFloat(step) * stripe, y: 0, width: stripe, height: CGFloat(height)))
+        }
+
+        guard let image = context.makeImage() else {
+            preconditionFailure("не удалось получить изображение из контекста")
+        }
+        return image
+    }
 }
