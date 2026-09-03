@@ -66,6 +66,12 @@ extension AppDatabase {
             }
         }
 
+        migrator.registerMigration("v3_automatic_name") { db in
+            try db.alter(table: "document") { table in
+                table.add(column: "isNameAutomatic", .boolean).notNull().defaults(to: true)
+            }
+        }
+
         return migrator
     }
 }

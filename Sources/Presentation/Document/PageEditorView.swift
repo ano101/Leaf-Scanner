@@ -154,12 +154,13 @@ struct PageEditorView: View {
 
     private var controls: some View {
         VStack(spacing: 12) {
-            if suggestions.isEmpty == false {
-                Text("document.redaction.hint")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
+            // Подсказка показывается всегда, а не только когда что-то найдено:
+            // человек не догадается, что область можно обвести пальцем, если
+            // ему об этом не сказать.
+            Text(suggestions.isEmpty ? "document.redaction.hint.manual" : "document.redaction.hint")
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
 
             HStack(spacing: 10) {
                 Button {
@@ -187,8 +188,7 @@ struct PageEditorView: View {
             }
             .buttonStyle(.bordered)
             .tint(Theme.accent)
-            .labelStyle(.iconOnly)
-            .font(.title3)
+            .font(.subheadline)
         }
         .padding(16)
         .frame(maxWidth: .infinity)

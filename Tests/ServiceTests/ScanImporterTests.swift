@@ -111,3 +111,18 @@ struct ScanImporterTests {
         #expect(name.count <= ScanImporter.maxNameLength)
     }
 }
+
+@Suite("Заголовок на листе")
+struct HeadingTests {
+    @Test("пустой лист не даёт заголовка")
+    func blankSheetGivesNoHeading() {
+        #expect(ScanImporter.heading(from: nil) == nil)
+        #expect(ScanImporter.heading(from: "") == nil)
+        #expect(ScanImporter.heading(from: "  \n \n") == nil)
+    }
+
+    @Test("слишком короткая строка заголовком не считается")
+    func tooShortLineIsNotAHeading() {
+        #expect(ScanImporter.heading(from: "№\nДоговор аренды") == "Договор аренды")
+    }
+}

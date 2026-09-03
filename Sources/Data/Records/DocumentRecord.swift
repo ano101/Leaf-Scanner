@@ -9,6 +9,7 @@ struct DocumentRecord: Codable, FetchableRecord, PersistableRecord, Sendable {
     var folderId: String?
     var createdAt: Date
     var updatedAt: Date
+    var isNameAutomatic: Bool
 
     init(document: Document) {
         self.id = document.id.raw.uuidString
@@ -16,6 +17,7 @@ struct DocumentRecord: Codable, FetchableRecord, PersistableRecord, Sendable {
         self.folderId = document.folderID?.raw.uuidString
         self.createdAt = document.createdAt
         self.updatedAt = document.updatedAt
+        self.isNameAutomatic = document.isNameAutomatic
     }
 
     func toDocument(pages: [Page], tagIDs: [TagID]) throws -> Document {
@@ -30,7 +32,8 @@ struct DocumentRecord: Codable, FetchableRecord, PersistableRecord, Sendable {
             tagIDs: tagIDs,
             createdAt: createdAt,
             updatedAt: updatedAt,
-            pages: pages
+            pages: pages,
+            isNameAutomatic: isNameAutomatic
         )
     }
 }

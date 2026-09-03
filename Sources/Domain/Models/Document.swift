@@ -10,6 +10,10 @@ public struct Document: Identifiable, Hashable, Sendable {
     public var createdAt: Date
     public var updatedAt: Date
     public var pages: [Page]
+    /// Имя, предложенное приложением, а не заданное человеком. Такое имя
+    /// можно уточнить, когда распознавание найдёт заголовок; имя, введённое
+    /// человеком, трогать нельзя никогда.
+    public var isNameAutomatic: Bool
 
     public init(
         id: DocumentID = .init(),
@@ -18,7 +22,8 @@ public struct Document: Identifiable, Hashable, Sendable {
         tagIDs: [TagID] = [],
         createdAt: Date = Date(),
         updatedAt: Date = Date(),
-        pages: [Page] = []
+        pages: [Page] = [],
+        isNameAutomatic: Bool = true
     ) {
         self.id = id
         self.name = name
@@ -27,6 +32,7 @@ public struct Document: Identifiable, Hashable, Sendable {
         self.createdAt = createdAt
         self.updatedAt = updatedAt
         self.pages = pages
+        self.isNameAutomatic = isNameAutomatic
     }
 
     public var pageCount: Int { pages.count }

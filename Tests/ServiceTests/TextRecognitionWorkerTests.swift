@@ -91,3 +91,68 @@ struct TextRecognitionWorkerTests {
         try await context.worker.process(documentID: DocumentID())
     }
 }
+
+@Suite("Уточнение имени после распознавания")
+struct DocumentNamingTests {
+    private func makeContext() throws -> (TextRecognitionWorker, DocumentRepository, ScanImporter, URL) {
+        let root = URL(fileURLWithPath: NSTemporaryDirectory())
+            .appendingPathComponent("leaf-naming-\(UUID().uuidString)")
+        let store = try PageStore(root: root)
+        let database = try AppDatabase.inMemory()
+        let documents = DocumentRepository(database: database)
+
+        return (
+            TextRecognitionWorker(images: store, recognizer: TextRecognizer(), documents: documents),
+            documents,
+            ScanImporter(store: store),
+            root
+        )
+    }
+
+    @Test("имя-дата уточняется заголовком, найденным на листе")
+    func dateNameIsRefinedByTheHeadingOnTheSheet() async throws {
+        let (worker, documents, importer, root) = try makeContext()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let pages = try await importer.makePages(from: [ImageFactory.text("ДОГОВОР")])
+        let document = Document(
+            name: ScanImporter.suggestedName(from: nil, date: Date()),
+            pages: pages
+        )
+        try await documents.save(document)
+
+        try await worker.process(documentID: document.id)
+
+        let stored = try #require(try await documents.document(document.id))
+        #expect(stored.name.uppercased().contains("ДОГОВОР"))
+    }
+
+    @Test("имя, заданное человеком, распознавание не трогает")
+    func nameGivenByThePersonIsNeverTouched() async throws {
+        let (worker, documents, importer, root) = try makeContext()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        let pages = try await importer.makePages(from: [ImageFactory.text("ДОГОВОР")])
+        let document = Document(name: "Моё название", pages: pages, isNameAutomatic: false)
+        try await documents.save(document)
+
+        try await worker.process(documentID: document.id)
+
+        let stored = try #require(try await documents.document(document.id))
+        #expect(stored.name == "Моё название")
+    }
+
+    @Test("признак автоматического имени переживает запись и чтение")
+    func automaticNameFlagSurvivesRoundTrip() async throws {
+        let (_, documents, _, root) = try makeContext()
+        defer { try? FileManager.default.removeItem(at: root) }
+
+        try await documents.save(Document(name: "Ручное", isNameAutomatic: false))
+        try await documents.save(Document(name: "Само", isNameAutomatic: true))
+
+        let stored = try await documents.all(inFolder: nil)
+        #expect(stored.count == 2)
+        #expect(stored.first { $0.name == "Ручное" }?.isNameAutomatic == false)
+        #expect(stored.first { $0.name == "Само" }?.isNameAutomatic == true)
+    }
+}

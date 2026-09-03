@@ -44,6 +44,17 @@ public actor TextRecognitionWorker {
         }
 
         guard changed else { return }
+
+        // Документ создаётся под именем-датой, потому что заголовка ещё нет.
+        // Как только текст разобран, имя уточняется — но только если человек
+        // не назвал документ сам.
+        if document.isNameAutomatic {
+            let firstPageText = PageOrdering.sorted(document.pages).first?.recognizedText
+            if let heading = ScanImporter.heading(from: firstPageText) {
+                document.name = heading
+            }
+        }
+
         try await documents.save(document)
     }
 }

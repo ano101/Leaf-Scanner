@@ -86,7 +86,10 @@ public final class DocumentModel {
         let trimmed = name.trimmingCharacters(in: .whitespaces)
         guard trimmed.isEmpty == false else { return }
 
-        await update { document in document.name = trimmed }
+        await update { document in
+            document.name = trimmed
+            document.isNameAutomatic = false
+        }
     }
 
     public func split(after index: Int, tailName: String) async -> Document? {

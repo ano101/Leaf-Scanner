@@ -1,3 +1,4 @@
+import PhotosUI
 import SwiftUI
 
 public struct ArchiveView: View {
@@ -5,6 +6,9 @@ public struct ArchiveView: View {
     @State private var isCreatingFolder = false
     @State private var newFolderName = ""
     @State private var openedDocument: Document?
+    @State private var photoSelection: [PhotosPickerItem] = []
+    @State private var isChoosingFile = false
+    @State private var importFailureKey: String?
 
     private let services: AppServices
 
@@ -25,21 +29,54 @@ public struct ArchiveView: View {
     public var body: some View {
         content
             .navigationTitle(folderTitle ?? String(localized: "archive.title"))
-            .searchable(text: $model.query, prompt: Text("archive.search.prompt"))
+            .searchable(
+                text: $model.query,
+                placement: .navigationBarDrawer(displayMode: .always),
+                prompt: Text("archive.search.prompt")
+            )
             .onChange(of: model.query) { _, _ in
                 Task { await model.runSearch() }
             }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        newFolderName = ""
-                        isCreatingFolder = true
+                    Menu {
+                        Button {
+                            newFolderName = ""
+                            isCreatingFolder = true
+                        } label: {
+                            Label("archive.folder.new", systemImage: "folder.badge.plus")
+                        }
+
+                        Divider()
+
+                        Button {
+                            isChoosingFile = true
+                        } label: {
+                            Label("archive.import.files", systemImage: "folder")
+                        }
                     } label: {
-                        Label("archive.folder.new", systemImage: "folder.badge.plus")
+                        Image(systemName: "ellipsis.circle")
+                    }
+                }
+
+                ToolbarItem(placement: .topBarTrailing) {
+                    PhotosPicker(
+                        selection: $photoSelection,
+                        matching: .images,
+                        photoLibrary: .shared()
+                    ) {
+                        Label("archive.import.photos", systemImage: "photo.on.rectangle")
                     }
                 }
             }
-            .safeAreaInset(edge: .bottom) { scanButton }
+            .safeAreaInset(edge: .bottom) {
+                // На пустом архиве действие уже предложено в центре экрана.
+                // Две одинаковые кнопки на одном экране заставляют выбирать
+                // между ними, хотя выбора нет.
+                if model.isEmpty == false || model.isSearching {
+                    scanButton
+                }
+            }
             .alert("archive.folder.new", isPresented: $isCreatingFolder) {
                 TextField("archive.folder.name", text: $newFolderName)
                 Button("common.cancel", role: .cancel) {}
@@ -49,6 +86,27 @@ public struct ArchiveView: View {
             }
             .navigationDestination(item: $openedDocument) { document in
                 DocumentView(document: document, services: services)
+            }
+            .fileImporter(
+                isPresented: $isChoosingFile,
+                allowedContentTypes: [.pdf, .image],
+                allowsMultipleSelection: false
+            ) { result in
+                guard case let .success(urls) = result, let url = urls.first else { return }
+                Task { await importFile(at: url) }
+            }
+            .onChange(of: photoSelection) { _, items in
+                guard items.isEmpty == false else { return }
+                Task { await importPhotos(items) }
+            }
+            .alert(
+                "archive.import.failed",
+                isPresented: Binding(
+                    get: { importFailureKey != nil },
+                    set: { if $0 == false { importFailureKey = nil } }
+                )
+            ) {
+                Button("common.close", role: .cancel) {}
             }
             .task { await model.load() }
             .refreshable { await model.load() }
@@ -182,6 +240,56 @@ public struct ArchiveView: View {
             set: { if $0 == false { services.scanner.fail(with: ScanError.cancelled) } }
         )) {
             DocumentCamera(source: services.scanner).ignoresSafeArea()
+        }
+    }
+
+    private func importPhotos(_ items: [PhotosPickerItem]) async {
+        var data: [Data] = []
+        for item in items {
+            if let loaded = try? await item.loadTransferable(type: Data.self) {
+                data.append(loaded)
+            }
+        }
+        photoSelection = []
+
+        await store(pages: {
+            try await DocumentImporter(importer: services.importer).pages(fromImageData: data)
+        })
+    }
+
+    private func importFile(at url: URL) async {
+        await store(pages: {
+            let importer = DocumentImporter(importer: services.importer)
+            if url.pathExtension.lowercased() == "pdf" {
+                return try await importer.pages(fromPDF: url)
+            }
+
+            let accessed = url.startAccessingSecurityScopedResource()
+            defer { if accessed { url.stopAccessingSecurityScopedResource() } }
+            return try await importer.pages(fromImageData: [try Data(contentsOf: url)])
+        })
+    }
+
+    /// Общий путь для съёмки и импорта: документ появляется в архиве сразу,
+    /// разбор текста идёт следом.
+    private func store(pages make: () async throws -> [Page]) async {
+        do {
+            let pages = try await make()
+            guard pages.isEmpty == false else { return }
+
+            let document = Document(
+                name: ScanImporter.suggestedName(from: nil, date: Date()),
+                folderID: model.folderID,
+                pages: pages
+            )
+            try await services.documents.save(document)
+            await model.load()
+
+            Task.detached(priority: .utility) { [services] in
+                try? await services.recognition.process(documentID: document.id)
+            }
+        } catch {
+            importFailureKey = "archive.import.failed"
         }
     }
 

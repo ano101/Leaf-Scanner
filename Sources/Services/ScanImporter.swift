@@ -35,14 +35,21 @@ public struct ScanImporter: Sendable {
     /// Имя документа предлагается сразу, чтобы в архиве не появлялось строк
     /// «Без названия»: безымянный документ невозможно найти глазами.
     public static func suggestedName(from recognizedText: String?, date: Date) -> String {
+        heading(from: recognizedText) ?? DateFormatter.documentName.string(from: date)
+    }
+
+    /// Заголовок, найденный на листе, — или ничего.
+    ///
+    /// Отделено от предложения имени нарочно: уточнять название задним числом
+    /// можно только настоящим заголовком. Подстановка даты вместо него стёрла
+    /// бы осмысленное имя и выглядела бы как потеря названия.
+    public static func heading(from recognizedText: String?) -> String? {
         let firstMeaningfulLine = recognizedText?
             .split(separator: "\n")
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .first { $0.count >= 3 }
 
-        guard let firstMeaningfulLine else {
-            return DateFormatter.documentName.string(from: date)
-        }
+        guard let firstMeaningfulLine else { return nil }
 
         guard firstMeaningfulLine.count > maxNameLength else { return firstMeaningfulLine }
         return String(firstMeaningfulLine.prefix(maxNameLength)).trimmingCharacters(in: .whitespaces)
