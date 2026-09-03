@@ -27,7 +27,10 @@ enum ImageFactory {
         return image
     }
 
-    /// Две половины разной яркости: по ним видно повороты и обрезку.
+    /// Верхняя половина чёрная, нижняя белая — по ним видно повороты и обрезку.
+    ///
+    /// Начало координат контекста рисования внизу слева, поэтому «верх»
+    /// изображения — это большие значения y, а не нулевые.
     static func halves(width: Int, height: Int) -> CGImage {
         let context = CGContext(
             data: nil,
@@ -45,7 +48,7 @@ enum ImageFactory {
         context.setFillColor(CGColor(red: 1, green: 1, blue: 1, alpha: 1))
         context.fill(CGRect(x: 0, y: 0, width: width, height: height))
         context.setFillColor(CGColor(red: 0, green: 0, blue: 0, alpha: 1))
-        context.fill(CGRect(x: 0, y: 0, width: width, height: height / 2))
+        context.fill(CGRect(x: 0, y: height / 2, width: width, height: height / 2))
 
         guard let image = context.makeImage() else {
             preconditionFailure("не удалось получить изображение из контекста")
