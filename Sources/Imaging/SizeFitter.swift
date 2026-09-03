@@ -55,7 +55,8 @@ public struct SizeFitter: Sendable {
         pages: [Page],
         text: [PageID: [RecognizedLine]],
         limitBytes: Int,
-        colorMode: ColorMode
+        colorMode: ColorMode,
+        password: String? = nil
     ) async throws -> SizeFitOutcome {
         guard pages.isEmpty == false else { throw PDFBuildError.noPages }
 
@@ -91,7 +92,7 @@ public struct SizeFitter: Sendable {
             // получится», самый сжатый вариант собирается по-настоящему.
             if let rescued = try rescue(
                 pages: pages, images: originals, probes: probes, text: text,
-                limitBytes: limitBytes, colorMode: colorMode
+                limitBytes: limitBytes, colorMode: colorMode, password: password
             ) {
                 return .fitted(rescued)
             }
@@ -100,7 +101,7 @@ public struct SizeFitter: Sendable {
         case .impossible(let bestBytes):
             if let rescued = try rescue(
                 pages: pages, images: originals, probes: probes, text: text,
-                limitBytes: limitBytes, colorMode: colorMode
+                limitBytes: limitBytes, colorMode: colorMode, password: password
             ) {
                 return .fitted(rescued)
             }
@@ -108,7 +109,7 @@ public struct SizeFitter: Sendable {
 
         case .fitted(let plan, let estimate):
             var chosen = plan
-            var data = try build(pages: pages, images: originals, text: text, plan: chosen)
+            var data = try build(pages: pages, images: originals, text: text, plan: chosen, password: password)
 
             // Оценка по пробам могла оказаться оптимистичной. Обещать вес
             // и отдать файл тяжелее обещанного нельзя: человек узнает об этом
@@ -129,7 +130,7 @@ public struct SizeFitter: Sendable {
                     return .impossible(bestBytes: bestBytes)
                 case .fitted(let secondPlan, _):
                     chosen = secondPlan
-                    data = try build(pages: pages, images: originals, text: text, plan: chosen)
+                    data = try build(pages: pages, images: originals, text: text, plan: chosen, password: password)
                 }
             }
 
@@ -139,7 +140,7 @@ public struct SizeFitter: Sendable {
             // проверять уже нечего, он либо влезает, либо нет.
             if data.count > limitBytes {
                 let smallest = SizeSearch.smallestPlan(colorMode: colorMode)
-                let smallestData = try build(pages: pages, images: originals, text: text, plan: smallest)
+                let smallestData = try build(pages: pages, images: originals, text: text, plan: smallest, password: password)
                 if smallestData.count <= limitBytes {
                     chosen = smallest
                     data = smallestData
@@ -174,10 +175,11 @@ public struct SizeFitter: Sendable {
         probes: [PageID: CGImage],
         text: [PageID: [RecognizedLine]],
         limitBytes: Int,
-        colorMode: ColorMode
+        colorMode: ColorMode,
+        password: String?
     ) throws -> SizeFitResult? {
         let smallest = SizeSearch.smallestPlan(colorMode: colorMode)
-        let data = try build(pages: pages, images: images, text: text, plan: smallest)
+        let data = try build(pages: pages, images: images, text: text, plan: smallest, password: password)
         guard data.count <= limitBytes else { return nil }
 
         return SizeFitResult(
@@ -197,11 +199,14 @@ public struct SizeFitter: Sendable {
         try build(pages: pages, images: images, text: text, plan: plan).count
     }
 
+    /// Пароль применяется только к настоящим сборкам: пробы существуют ради
+    /// скорости, и шифровать их незачем.
     private func build(
         pages: [Page],
         images: [PageID: CGImage],
         text: [PageID: [RecognizedLine]],
-        plan: ExportPlan
+        plan: ExportPlan,
+        password: String? = nil
     ) throws -> Data {
         let rendered = try PageOrdering.sorted(pages).map { page -> RenderedPage in
             guard let image = images[page.id] else {
@@ -214,7 +219,7 @@ public struct SizeFitter: Sendable {
             )
         }
 
-        return try builder.build(pages: rendered, password: nil)
+        return try builder.build(pages: rendered, password: password)
     }
 
     /// Вес считается по пробным копиям: сравнение относительное,
