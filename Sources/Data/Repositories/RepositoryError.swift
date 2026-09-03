@@ -6,4 +6,5 @@ public enum RepositoryError: Error, Equatable, Sendable {
     case folderNotFound(FolderID)
     case corruptedRecord(table: String, id: String)
     case nothingToMerge
+    case splitWouldLeaveEmptyDocument
 }

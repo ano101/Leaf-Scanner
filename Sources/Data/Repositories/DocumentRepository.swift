@@ -7,6 +7,7 @@ public protocol DocumentRepositoryProtocol: Sendable {
     func document(_ id: DocumentID) async throws -> Document?
     func delete(_ id: DocumentID) async throws
     func merge(_ ids: [DocumentID], into name: String) async throws -> Document
+    func split(_ id: DocumentID, after index: Int, tailName: String) async throws -> (head: Document, tail: Document)
 }
 
 public struct DocumentRepository: DocumentRepositoryProtocol {
@@ -111,6 +112,56 @@ public struct DocumentRepository: DocumentRepositoryProtocol {
         }
 
         return merged
+    }
+
+    /// Разделение документа надвое. Как и слияние, идёт одной транзакцией:
+    /// половина страниц, оставшаяся без документа, была бы потерей данных.
+    public func split(
+        _ id: DocumentID,
+        after index: Int,
+        tailName: String
+    ) async throws -> (head: Document, tail: Document) {
+        guard var document = try await self.document(id) else {
+            throw RepositoryError.documentNotFound(id)
+        }
+
+        // Разрез по краю оставил бы один из документов пустым. Пустой документ
+        // в архиве — это строка, которую человек откроет и не поймёт, зачем она.
+        guard index >= 0, index < document.pages.count - 1 else {
+            throw RepositoryError.splitWouldLeaveEmptyDocument
+        }
+
+        let ordered = PageOrdering.sorted(document.pages)
+        let headPages = PageOrdering.renumbered(Array(ordered[...index]))
+        let tailPages = PageOrdering.renumbered(Array(ordered[(index + 1)...]))
+
+        document.pages = headPages
+        document.updatedAt = Date()
+
+        var tail = Document(name: tailName, pages: tailPages)
+        tail.folderID = document.folderID
+        tail.tagIDs = document.tagIDs
+
+        let headRecord = DocumentRecord(document: document)
+        let tailRecord = DocumentRecord(document: tail)
+        let headPageRecords = try headPages.map { try PageRecord(page: $0, documentId: document.id) }
+        let tailPageRecords = try tailPages.map { try PageRecord(page: $0, documentId: tail.id) }
+
+        try await database.writer.write { db in
+            try headRecord.save(db)
+            try tailRecord.insert(db)
+
+            // Страницы хвоста меняют владельца, поэтому старые записи
+            // снимаются раньше вставки новых: идентификаторы те же.
+            try PageRecord
+                .filter(Column("documentId") == headRecord.id)
+                .deleteAll(db)
+            for record in headPageRecords + tailPageRecords {
+                try record.insert(db)
+            }
+        }
+
+        return (document, tail)
     }
 
     /// Служебный счётчик для проверки каскадного удаления в тестах.

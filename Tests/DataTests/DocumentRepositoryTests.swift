@@ -126,6 +126,45 @@ struct DocumentRepositoryTests {
         #expect(try await repository.pageCount() == 1)
     }
 
+    @Test("разделение даёт два документа с сохранённым порядком страниц")
+    func splitGivesTwoDocumentsKeepingPageOrder() async throws {
+        let repository = try makeRepository()
+        let pages = PageFactory.pages(count: 4)
+        let document = Document(name: "Пачка", pages: pages)
+        try await repository.save(document)
+
+        let (head, tail) = try await repository.split(document.id, after: 1, tailName: "Хвост")
+
+        #expect(head.pages.map(\.id) == [pages[0].id, pages[1].id])
+        #expect(tail.pages.map(\.id) == [pages[2].id, pages[3].id])
+        #expect(head.pages.map(\.order) == [0, 1])
+        #expect(tail.pages.map(\.order) == [0, 1])
+    }
+
+    @Test("после разделения в архиве два документа вместо одного")
+    func afterSplitArchiveHoldsTwoDocuments() async throws {
+        let repository = try makeRepository()
+        let document = Document(name: "Пачка", pages: PageFactory.pages(count: 3))
+        try await repository.save(document)
+
+        _ = try await repository.split(document.id, after: 0, tailName: "Хвост")
+
+        #expect(try await repository.all(inFolder: nil).count == 2)
+        #expect(try await repository.pageCount() == 3)
+    }
+
+    @Test("разделение по краю списка отклоняется, а не создаёт пустой документ")
+    func splitAtTheEdgeIsRejected() async throws {
+        let repository = try makeRepository()
+        let document = Document(name: "Пачка", pages: PageFactory.pages(count: 2))
+        try await repository.save(document)
+
+        await #expect(throws: RepositoryError.self) {
+            _ = try await repository.split(document.id, after: 1, tailName: "Хвост")
+        }
+        #expect(try await repository.all(inFolder: nil).count == 1)
+    }
+
     @Test("документы разложены по папкам")
     func documentsAreFilteredByFolder() async throws {
         let repository = try makeRepository()
