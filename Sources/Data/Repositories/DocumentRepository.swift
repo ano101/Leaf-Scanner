@@ -46,14 +46,58 @@ public struct DocumentRepository: DocumentRepositoryProtocol {
         }
     }
 
+    /// Список архива собирается тремя запросами независимо от числа
+    /// документов: сами документы, все их страницы и все метки.
+    ///
+    /// Запрос страниц на каждый документ превращал бы открытие архива
+    /// из тысячи строк в две тысячи обращений к базе. Замер показывал
+    /// сто сорок миллисекунд вместо обещанных ста — человек это замечает.
     public func all(inFolder folderID: FolderID?) async throws -> [Document] {
         try await database.writer.read { db in
-            let request = DocumentRecord
+            let records = try DocumentRecord
                 .filter(Column("folderId") == folderID?.raw.uuidString)
                 .order(Column("updatedAt").desc)
-            let records = try request.fetchAll(db)
+                .fetchAll(db)
 
-            return try records.map { try Self.assemble($0, in: db) }
+            guard records.isEmpty == false else { return [] }
+
+            // Условие повторяется подзапросом, а не списком идентификаторов:
+            // тысяча параметров упёрлась бы в предел SQLite.
+            let scope = folderID == nil
+                ? "SELECT id FROM document WHERE folderId IS NULL"
+                : "SELECT id FROM document WHERE folderId = ?"
+            let arguments: StatementArguments = folderID
+                .map { [$0.raw.uuidString] }
+                ?? []
+
+            let pageRows = try PageRecord.fetchAll(
+                db,
+                sql: "SELECT * FROM page WHERE documentId IN (\(scope)) ORDER BY ordinal",
+                arguments: arguments
+            )
+            let tagRows = try DocumentTagRecord.fetchAll(
+                db,
+                sql: "SELECT * FROM documentTag WHERE documentId IN (\(scope))",
+                arguments: arguments
+            )
+
+            var pagesByDocument: [String: [Page]] = [:]
+            for row in pageRows {
+                pagesByDocument[row.documentId, default: []].append(try row.toPage())
+            }
+
+            var tagsByDocument: [String: [TagID]] = [:]
+            for row in tagRows {
+                guard let uuid = UUID(uuidString: row.tagId) else { continue }
+                tagsByDocument[row.documentId, default: []].append(TagID(uuid))
+            }
+
+            return try records.map { record in
+                try record.toDocument(
+                    pages: pagesByDocument[record.id] ?? [],
+                    tagIDs: tagsByDocument[record.id] ?? []
+                )
+            }
         }
     }
 
