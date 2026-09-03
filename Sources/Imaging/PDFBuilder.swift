@@ -17,10 +17,25 @@ public struct RecognizedLine: Equatable, Sendable, Codable {
 public struct RenderedPage: Sendable {
     public let image: CGImage
     public let text: [RecognizedLine]
+    public let redactions: [RedactionArea]
 
-    public init(image: CGImage, text: [RecognizedLine]) {
+    public init(image: CGImage, text: [RecognizedLine], redactions: [RedactionArea] = []) {
         self.image = image
         self.text = text
+        self.redactions = redactions
+    }
+
+    /// Строки, которым разрешено попасть в текстовый слой.
+    ///
+    /// Задетая замазкой строка выбрасывается целиком, а не обрезается:
+    /// распознавание не даёт координат отдельных символов, и попытка
+    /// вырезать «только закрытую часть» оставила бы в файле остаток номера.
+    var publishableText: [RecognizedLine] {
+        guard redactions.isEmpty == false else { return text }
+
+        return text.filter { line in
+            redactions.contains { $0.rect.intersects(line.box) } == false
+        }
     }
 }
 
@@ -79,7 +94,7 @@ public struct PDFBuilder: Sendable {
             var mediaBox = box(for: page.image)
             context.beginPage(mediaBox: &mediaBox)
             context.draw(page.image, in: mediaBox)
-            draw(page.text, in: mediaBox, context: context)
+            draw(page.publishableText, in: mediaBox, context: context)
             context.endPage()
         }
 
@@ -103,6 +118,15 @@ public struct PDFBuilder: Sendable {
         )
     }
 
+    private func width(of text: String, size: CGFloat) -> CGFloat {
+        let font = CTFontCreateWithName("Helvetica" as CFString, size, nil)
+        let attributed = NSAttributedString(
+            string: text,
+            attributes: [kCTFontAttributeName as NSAttributedString.Key: font]
+        )
+        return CTLineGetTypographicBounds(CTLineCreateWithAttributedString(attributed), nil, nil, nil)
+    }
+
     private func draw(_ lines: [RecognizedLine], in box: CGRect, context: CGContext) {
         guard lines.isEmpty == false else { return }
 
@@ -112,14 +136,27 @@ public struct PDFBuilder: Sendable {
         context.setTextDrawingMode(.invisible)
 
         for line in lines where line.text.isEmpty == false {
-            let height = max(line.box.height * box.height, 1)
-            let font = CTFontCreateWithName("Helvetica" as CFString, height, nil)
+            let boxHeight = max(line.box.height * box.height, 1)
+            let targetWidth = max(line.box.width * box.width, 1)
+
+            // Размер шрифта подбирается так, чтобы строка уместилась в свою
+            // рамку. Растягивать текстовую матрицу нельзя: глифы разъезжаются,
+            // и извлечённый текст приходит с пробелом между каждой буквой.
+            // Выезд за край листа тоже недопустим — там теряются последние
+            // символы, то есть ровно та часть номера, ради которой ищут.
+            let measured = width(of: line.text, size: boxHeight)
+            let fittedSize = measured > targetWidth
+                ? boxHeight * (targetWidth / measured)
+                : boxHeight
+
+            let font = CTFontCreateWithName("Helvetica" as CFString, fittedSize, nil)
             let attributed = NSAttributedString(
                 string: line.text,
                 attributes: [kCTFontAttributeName as NSAttributedString.Key: font]
             )
             let typeset = CTLineCreateWithAttributedString(attributed)
 
+            context.textMatrix = .identity
             context.textPosition = CGPoint(
                 x: line.box.x * box.width,
                 // Доли считаются сверху, начало координат страницы внизу.
