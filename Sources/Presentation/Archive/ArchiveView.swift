@@ -11,6 +11,7 @@ public struct ArchiveView: View {
     @State private var isPickingPhotos = false
     @State private var isSelecting = false
     @State private var isMerging = false
+    @State private var isShowingSettings = false
     @State private var mergeName = ""
     @State private var importFailureKey: String?
 
@@ -57,6 +58,14 @@ public struct ArchiveView: View {
                         } label: {
                             Label(isSelecting ? "common.selection.done" : "common.select",
                                   systemImage: "checkmark.circle")
+                        }
+
+                        Divider()
+
+                        Button {
+                            isShowingSettings = true
+                        } label: {
+                            Label("settings.title", systemImage: "gearshape")
                         }
 
                         Divider()

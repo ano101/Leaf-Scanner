@@ -4,20 +4,26 @@ import SwiftUI
 struct LeafApp: App {
     @State private var services: AppServices?
     @State private var startupError: String?
+    @State private var isStarting = true
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some Scene {
         WindowGroup {
-            Group {
+            ZStack {
                 if let services {
                     RootView(services: services)
                 } else if startupError != nil {
                     FailureView(messageKey: "app.error.start") { start() }
-                } else {
-                    ProgressView().task { start() }
+                }
+
+                if isStarting {
+                    SplashView()
+                        .transition(.opacity)
+                        .task { await openArchive() }
                 }
             }
             .tint(Theme.accent)
+            .preferredColorScheme(services?.settings.theme.colorScheme)
             .onChange(of: scenePhase) { _, phase in
                 if phase != .active { services?.lock.lockOnBackground() }
             }
@@ -31,6 +37,15 @@ struct LeafApp: App {
         } catch {
             startupError = error.localizedDescription
         }
+    }
+
+    /// Заставка держится ровно столько, сколько нужно, чтобы человек успел
+    /// её увидеть, и ни секундой дольше. Открытие архива идёт параллельно,
+    /// а не после неё.
+    private func openArchive() async {
+        start()
+        try? await Task.sleep(for: .milliseconds(650))
+        withAnimation(.easeOut(duration: 0.25)) { isStarting = false }
     }
 }
 
