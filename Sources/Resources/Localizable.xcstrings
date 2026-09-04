@@ -626,70 +626,6 @@
         }
       }
     },
-    "filter.original": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Как снято"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "As captured"
-          }
-        }
-      }
-    },
-    "filter.enhanced": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Чище"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Cleaner"
-          }
-        }
-      }
-    },
-    "filter.gray": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Серый"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Gray"
-          }
-        }
-      }
-    },
-    "filter.blackAndWhite": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Чёрно-белый"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Black and white"
-          }
-        }
-      }
-    },
     "export.title": {
       "localizations": {
         "ru": {
@@ -814,70 +750,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "Size limit"
-          }
-        }
-      }
-    },
-    "export.color": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Цвет"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Colour"
-          }
-        }
-      }
-    },
-    "export.color.color": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Цветной"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Colour"
-          }
-        }
-      }
-    },
-    "export.color.gray": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Серый"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Gray"
-          }
-        }
-      }
-    },
-    "export.color.blackAndWhite": {
-      "localizations": {
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Чёрно-белый"
-          }
-        },
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Black and white"
           }
         }
       }
@@ -1394,6 +1266,86 @@
           "stringUnit": {
             "state": "translated",
             "value": "More"
+          }
+        }
+      }
+    },
+    "look.asShot": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Как снято"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "As captured"
+          }
+        }
+      }
+    },
+    "look.color": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Цветной скан"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Colour scan"
+          }
+        }
+      }
+    },
+    "look.gray": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Серый скан"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gray scan"
+          }
+        }
+      }
+    },
+    "look.blackAndWhite": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Чёрно-белый"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Black and white"
+          }
+        }
+      }
+    },
+    "export.look": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вид"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Look"
           }
         }
       }

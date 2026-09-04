@@ -15,7 +15,7 @@ enum PixelSampler {
         return Double(values.reduce(0, +)) / Double(values.count)
     }
 
-    private static func luminances(of image: CGImage) -> [Int] {
+    static func luminances(of image: CGImage) -> [Int] {
         let width = image.width
         let height = image.height
         var pixels = [UInt8](repeating: 0, count: width * height * 4)
@@ -39,5 +39,33 @@ enum PixelSampler {
             let blue = Double(pixels[index + 2])
             return Int((0.299 * red + 0.587 * green + 0.114 * blue).rounded())
         }
+    }
+
+    /// Средняя яркость прямоугольной доли изображения.
+    static func averageLuminance(of image: CGImage, in fraction: CGRect) -> Double {
+        let rect = CGRect(
+            x: fraction.minX * CGFloat(image.width),
+            y: fraction.minY * CGFloat(image.height),
+            width: fraction.width * CGFloat(image.width),
+            height: fraction.height * CGFloat(image.height)
+        )
+        guard let cropped = image.cropping(to: rect) else { return 0 }
+        return averageLuminance(of: cropped)
+    }
+
+    /// Доля тёмных точек — по ней видно, съел ли чёрно-белый режим
+    /// затенённую половину листа.
+    static func darkShare(of image: CGImage, in fraction: CGRect, threshold: Int = 128) -> Double {
+        let rect = CGRect(
+            x: fraction.minX * CGFloat(image.width),
+            y: fraction.minY * CGFloat(image.height),
+            width: fraction.width * CGFloat(image.width),
+            height: fraction.height * CGFloat(image.height)
+        )
+        guard let cropped = image.cropping(to: rect) else { return 0 }
+
+        let values = luminances(of: cropped)
+        guard values.isEmpty == false else { return 0 }
+        return Double(values.filter { $0 < threshold }.count) / Double(values.count)
     }
 }

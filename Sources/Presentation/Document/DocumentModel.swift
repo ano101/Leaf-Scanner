@@ -40,10 +40,20 @@ public final class DocumentModel {
         }
     }
 
-    public func setFilter(_ filter: PageFilter, for pageID: PageID) async {
+    public func setLook(_ look: PageLook, for pageID: PageID) async {
         await update { document in
             guard let index = document.pages.firstIndex(where: { $0.id == pageID }) else { return }
-            document.pages[index].filter = filter
+            document.pages[index].look = look
+        }
+    }
+
+    /// Вид относится ко всему документу, как у настоящего сканера: человек
+    /// выбирает его один раз на пачку, а не заново на каждый лист.
+    public func setLookForAllPages(_ look: PageLook) async {
+        await update { document in
+            for index in document.pages.indices {
+                document.pages[index].look = look
+            }
         }
     }
 

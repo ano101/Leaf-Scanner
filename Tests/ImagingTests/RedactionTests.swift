@@ -51,7 +51,7 @@ struct RedactionTests {
         // Без уничтожения пикселей внутри неё осталось бы два уровня яркости,
         // и проверка отличает настоящую замазку от совпадения.
         let crossingHalves = NormalizedRect(x: 0, y: 0.25, width: 1, height: 0.5)
-        var page = Page(id: PageID(), order: 0, filter: .original)
+        var page = Page(id: PageID(), order: 0, look: .asShot)
         page.redactions = [RedactionArea(rect: crossingHalves)]
 
         let source = ImageFactory.halves(width: 200, height: 200)
@@ -61,11 +61,11 @@ struct RedactionTests {
             var plain = page
             plain.redactions = []
             return plain
-        }(), colorMode: .color, scale: 1.0)
+        }(), look: .color, scale: 1.0)
         let before = try #require(untouched.cropping(to: sampled))
         #expect(PixelSampler.luminanceLevels(of: before).count == 2, "фикстура обязана содержать два тона")
 
-        let result = try renderer.render(source, page: page, colorMode: .color, scale: 1.0)
+        let result = try renderer.render(source, page: page, look: .color, scale: 1.0)
         let after = try #require(result.cropping(to: sampled))
         #expect(PixelSampler.luminanceLevels(of: after).count == 1)
     }

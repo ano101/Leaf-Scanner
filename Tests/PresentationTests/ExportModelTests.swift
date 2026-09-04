@@ -7,7 +7,7 @@ import Testing
 @MainActor
 struct ExportModelTests {
     private func makeModel(pageCount: Int = 2, detailed: Bool = false) -> ExportModel {
-        let pages = (0..<pageCount).map { Page(order: $0, filter: .original) }
+        let pages = (0..<pageCount).map { Page(order: $0, look: .asShot) }
         let document = Document(name: "Договор", pages: pages)
         let source = StubImageSource(pages: pages, detailed: detailed)
         return ExportModel(document: document, fitter: SizeFitter(source: source))
@@ -20,7 +20,7 @@ struct ExportModelTests {
         model.selectPreset("bank")
 
         #expect(model.limitBytes == 2 * 1_048_576)
-        #expect(model.colorMode == .gray)
+        #expect(model.look == .gray)
         #expect(model.isCustomLimit == false)
     }
 
@@ -75,7 +75,7 @@ struct ExportModelTests {
 
         await model.acceptSuggestion()
 
-        #expect(model.colorMode != .color)
+        #expect(model.look != .color)
     }
 
     @Test("пароль с кириллицей объясняется до сборки, а не после")

@@ -16,7 +16,7 @@ public struct SizeFitResult: Sendable {
 
 public enum SizeFitOutcome: Sendable {
     case fitted(SizeFitResult)
-    case needsWeakerColor(suggestion: ColorMode)
+    case needsLighterLook(suggestion: PageLook)
     case impossible(bestBytes: Int)
 }
 
@@ -55,7 +55,7 @@ public struct SizeFitter: Sendable {
         pages: [Page],
         text: [PageID: [RecognizedLine]],
         limitBytes: Int,
-        colorMode: ColorMode,
+        look: PageLook,
         password: String? = nil
     ) async throws -> SizeFitOutcome {
         guard pages.isEmpty == false else { throw PDFBuildError.noPages }
@@ -80,28 +80,28 @@ public struct SizeFitter: Sendable {
 
         let ratio = probePixels > 0 ? fullPixels / probePixels : 1.0
 
-        let outcome = SizeSearch.fit(limitBytes: limitBytes, colorMode: colorMode) { plan in
+        let outcome = SizeSearch.fit(limitBytes: limitBytes, look: look) { plan in
             let bytes = (try? measure(pages: pages, images: probes, text: text, plan: plan)) ?? Int.max
             return bytes == Int.max ? Int.max : Int(Double(bytes) * ratio)
         }
 
         switch outcome {
-        case .needsWeakerColor(let suggestion):
+        case .needsLighterLook(let suggestion):
             // Отказ по оценке — ещё не отказ. Оценка строится на уменьшенных
             // копиях и может завысить вес; прежде чем сказать человеку «не
             // получится», самый сжатый вариант собирается по-настоящему.
             if let rescued = try rescue(
                 pages: pages, images: originals, probes: probes, text: text,
-                limitBytes: limitBytes, colorMode: colorMode, password: password
+                limitBytes: limitBytes, look: look, password: password
             ) {
                 return .fitted(rescued)
             }
-            return .needsWeakerColor(suggestion: suggestion)
+            return .needsLighterLook(suggestion: suggestion)
 
         case .impossible(let bestBytes):
             if let rescued = try rescue(
                 pages: pages, images: originals, probes: probes, text: text,
-                limitBytes: limitBytes, colorMode: colorMode, password: password
+                limitBytes: limitBytes, look: look, password: password
             ) {
                 return .fitted(rescued)
             }
@@ -118,14 +118,14 @@ public struct SizeFitter: Sendable {
             // не более одного раза, чтобы ожидание оставалось коротким.
             if data.count > limitBytes {
                 let correction = Double(data.count) / Double(max(estimate, 1))
-                let calibrated = SizeSearch.fit(limitBytes: limitBytes, colorMode: colorMode) { candidate in
+                let calibrated = SizeSearch.fit(limitBytes: limitBytes, look: look) { candidate in
                     let bytes = (try? measure(pages: pages, images: probes, text: text, plan: candidate)) ?? Int.max
                     return bytes == Int.max ? Int.max : Int(Double(bytes) * ratio * correction)
                 }
 
                 switch calibrated {
-                case .needsWeakerColor(let suggestion):
-                    return .needsWeakerColor(suggestion: suggestion)
+                case .needsLighterLook(let suggestion):
+                    return .needsLighterLook(suggestion: suggestion)
                 case .impossible(let bestBytes):
                     return .impossible(bestBytes: bestBytes)
                 case .fitted(let secondPlan, _):
@@ -139,7 +139,7 @@ public struct SizeFitter: Sendable {
             // остановится раньше времени, — но у самого сжатого плана
             // проверять уже нечего, он либо влезает, либо нет.
             if data.count > limitBytes {
-                let smallest = SizeSearch.smallestPlan(colorMode: colorMode)
+                let smallest = SizeSearch.smallestPlan(look: look)
                 let smallestData = try build(pages: pages, images: originals, text: text, plan: smallest, password: password)
                 if smallestData.count <= limitBytes {
                     chosen = smallest
@@ -150,8 +150,8 @@ public struct SizeFitter: Sendable {
             // Даже так предел может остаться недостижимым. Честный отказ
             // с настоящим весом полезнее файла, который не примут.
             guard data.count <= limitBytes else {
-                if let weaker = colorMode.weaker {
-                    return .needsWeakerColor(suggestion: weaker)
+                if let lighter = look.lighter {
+                    return .needsLighterLook(suggestion: lighter)
                 }
                 return .impossible(bestBytes: data.count)
             }
@@ -175,10 +175,10 @@ public struct SizeFitter: Sendable {
         probes: [PageID: CGImage],
         text: [PageID: [RecognizedLine]],
         limitBytes: Int,
-        colorMode: ColorMode,
+        look: PageLook,
         password: String?
     ) throws -> SizeFitResult? {
-        let smallest = SizeSearch.smallestPlan(colorMode: colorMode)
+        let smallest = SizeSearch.smallestPlan(look: look)
         let data = try build(pages: pages, images: images, text: text, plan: smallest, password: password)
         guard data.count <= limitBytes else { return nil }
 
@@ -213,7 +213,7 @@ public struct SizeFitter: Sendable {
                 throw PageStoreError.pageNotFound(page.id)
             }
             return RenderedPage(
-                image: try renderer.render(image, page: page, colorMode: plan.colorMode, scale: plan.scale),
+                image: try renderer.render(image, page: page, look: plan.look, scale: plan.scale),
                 text: text[page.id] ?? [],
                 redactions: page.redactions
             )

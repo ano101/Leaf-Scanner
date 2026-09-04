@@ -72,6 +72,26 @@ extension AppDatabase {
             }
         }
 
+        migrator.registerMigration("v4_page_look") { db in
+            // Два словаря, «вид» и «цвет», слились в один. Столбец
+            // переименовывается, а старые значения переводятся в новые:
+            // база на устройстве человека уже заполнена, и молча потерять
+            // выбранный им вид нельзя.
+            try db.alter(table: "page") { table in
+                table.rename(column: "filter", to: "look")
+            }
+
+            try db.execute(sql: """
+                UPDATE page SET look = CASE look
+                    WHEN 'original' THEN 'asShot'
+                    WHEN 'enhanced' THEN 'color'
+                    WHEN 'gray' THEN 'gray'
+                    WHEN 'blackAndWhite' THEN 'blackAndWhite'
+                    ELSE 'color'
+                END
+                """)
+        }
+
         return migrator
     }
 }

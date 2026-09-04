@@ -6,14 +6,14 @@ import Testing
 struct PageRendererTests {
     private let renderer = PageRenderer()
 
-    private func page(rotation: Rotation = .none, filter: PageFilter = .original) -> Page {
-        Page(id: PageID(), order: 0, rotation: rotation, filter: filter)
+    private func page(rotation: Rotation = .none, look: PageLook = .asShot) -> Page {
+        Page(id: PageID(), order: 0, rotation: rotation, look: look)
     }
 
     @Test("боковой поворот меняет ширину и высоту местами")
     func sideRotationSwapsDimensions() throws {
         let source = ImageFactory.solid(width: 400, height: 200)
-        let result = try renderer.render(source, page: page(rotation: .right), colorMode: .color, scale: 1.0)
+        let result = try renderer.render(source, page: page(rotation: .right), look: .color, scale: 1.0)
 
         #expect(result.width == 200)
         #expect(result.height == 400)
@@ -22,7 +22,7 @@ struct PageRendererTests {
     @Test("поворот вверх ногами сохраняет размеры")
     func upsideDownKeepsDimensions() throws {
         let source = ImageFactory.solid(width: 400, height: 200)
-        let result = try renderer.render(source, page: page(rotation: .upsideDown), colorMode: .color, scale: 1.0)
+        let result = try renderer.render(source, page: page(rotation: .upsideDown), look: .color, scale: 1.0)
 
         #expect(result.width == 400)
         #expect(result.height == 200)
@@ -33,7 +33,7 @@ struct PageRendererTests {
         // Верхняя половина чёрная, нижняя белая. После поворота вверх ногами
         // яркая половина обязана оказаться сверху.
         let source = ImageFactory.halves(width: 100, height: 100)
-        let result = try renderer.render(source, page: page(rotation: .upsideDown), colorMode: .color, scale: 1.0)
+        let result = try renderer.render(source, page: page(rotation: .upsideDown), look: .color, scale: 1.0)
 
         let sourceTop = PixelSampler.averageLuminance(of: try crop(source, topHalf: true))
         let resultTop = PixelSampler.averageLuminance(of: try crop(result, topHalf: true))
@@ -44,7 +44,7 @@ struct PageRendererTests {
     @Test("масштаб уменьшает страницу в заданную долю")
     func scaleShrinksPage() throws {
         let source = ImageFactory.solid(width: 1000, height: 800)
-        let result = try renderer.render(source, page: page(), colorMode: .color, scale: 0.5)
+        let result = try renderer.render(source, page: page(), look: .color, scale: 0.5)
 
         #expect(result.width == 500)
         #expect(result.height == 400)
@@ -53,7 +53,7 @@ struct PageRendererTests {
     @Test("масштаб не увеличивает страницу сверх оригинала")
     func scaleNeverEnlargesBeyondOriginal() throws {
         let source = ImageFactory.solid(width: 300, height: 300)
-        let result = try renderer.render(source, page: page(), colorMode: .color, scale: 2.0)
+        let result = try renderer.render(source, page: page(), look: .color, scale: 2.0)
 
         #expect(result.width == 300)
         #expect(result.height == 300)
@@ -62,7 +62,7 @@ struct PageRendererTests {
     @Test("чёрно-белый режим оставляет не больше двух уровней яркости")
     func blackAndWhiteLeavesAtMostTwoLevels() throws {
         let source = ImageFactory.halves(width: 120, height: 120)
-        let result = try renderer.render(source, page: page(), colorMode: .blackAndWhite, scale: 1.0)
+        let result = try renderer.render(source, page: page(), look: .blackAndWhite, scale: 1.0)
 
         #expect(PixelSampler.luminanceLevels(of: result).count <= 2)
     }
@@ -70,7 +70,7 @@ struct PageRendererTests {
     @Test("серый режим убирает цвет, но сохраняет полутона")
     func grayRemovesColorButKeepsShades() throws {
         let source = ImageFactory.halves(width: 120, height: 120)
-        let result = try renderer.render(source, page: page(), colorMode: .gray, scale: 1.0)
+        let result = try renderer.render(source, page: page(), look: .gray, scale: 1.0)
 
         #expect(PixelSampler.luminanceLevels(of: result).count >= 2)
     }
@@ -86,7 +86,7 @@ struct PageRendererTests {
             bottomLeft: NormalizedPoint(x: 0, y: 1)
         )
 
-        let result = try renderer.render(source, page: cropped, colorMode: .color, scale: 1.0)
+        let result = try renderer.render(source, page: cropped, look: .color, scale: 1.0)
 
         #expect(result.height < source.height)
         #expect(PixelSampler.averageLuminance(of: result) > 200)

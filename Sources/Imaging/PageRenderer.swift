@@ -27,7 +27,7 @@ public final class PageRenderer: @unchecked Sendable {
     public func render(
         _ image: CGImage,
         page: Page,
-        colorMode: ColorMode,
+        look: PageLook,
         scale: Double
     ) throws -> CGImage {
         var picture = CIImage(cgImage: image)
@@ -36,11 +36,7 @@ public final class PageRenderer: @unchecked Sendable {
             picture = corrected(picture, by: crop, in: image)
         }
 
-        if page.filter == .enhanced {
-            picture = enhanced(picture)
-        }
-
-        picture = colored(picture, mode: colorMode)
+        picture = looked(picture, as: look)
         picture = redacted(picture, areas: page.redactions)
         picture = rotated(picture, by: page.rotation)
 
@@ -101,33 +97,76 @@ public final class PageRenderer: @unchecked Sendable {
         return filter.outputImage ?? picture
     }
 
-    private func enhanced(_ picture: CIImage) -> CIImage {
-        let filter = CIFilter.documentEnhancer()
-        filter.inputImage = picture
-        filter.amount = 1.0
-        return filter.outputImage ?? picture
-    }
+    /// Приведение страницы к выбранному виду.
+    ///
+    /// Порядок важен: сначала выравнивается освещение, и только потом
+    /// снимается цвет или ставится порог. Обратный порядок — то, что делает
+    /// большинство приложений, — превращает тень от руки в чёрное пятно,
+    /// потому что порог один на весь лист.
+    private func looked(_ picture: CIImage, as look: PageLook) -> CIImage {
+        guard look.flattensLighting else { return picture }
 
-    private func colored(_ picture: CIImage, mode: ColorMode) -> CIImage {
-        switch mode {
-        case .color:
+        let flattened = flattenedLighting(picture)
+
+        switch look {
+        case .asShot:
             return picture
+        case .color:
+            return flattened
         case .gray:
             let filter = CIFilter.colorControls()
-            filter.inputImage = picture
+            filter.inputImage = flattened
             filter.saturation = 0
-            return filter.outputImage ?? picture
+            return filter.outputImage ?? flattened
         case .blackAndWhite:
             let mono = CIFilter.colorControls()
-            mono.inputImage = picture
+            mono.inputImage = flattened
             mono.saturation = 0
-            guard let grayscale = mono.outputImage else { return picture }
+            guard let grayscale = mono.outputImage else { return flattened }
 
             let threshold = CIFilter.colorThreshold()
             threshold.inputImage = grayscale
-            threshold.threshold = 0.5
+            // После выравнивания бумага везде около единицы, поэтому один
+            // порог работает как местный: он сравнивает точку не с абсолютной
+            // яркостью, а с яркостью бумаги рядом с ней.
+            threshold.threshold = 0.62
             return threshold.outputImage ?? grayscale
         }
+    }
+
+    /// Выравнивание освещения — то, чем сканер отличается от фотоаппарата.
+    ///
+    /// Сильное размытие оставляет от страницы только освещённость: буквы
+    /// в нём растворяются, а тень от руки и градиент от лампы остаются.
+    /// Деление исходника на эту освещённость убирает их разом — вместе
+    /// с желтизной бумаги, потому что делится каждый цветовой канал
+    /// по отдельности.
+    private func flattenedLighting(_ picture: CIImage) -> CIImage {
+        let extent = picture.extent
+        guard extent.width > 1, extent.height > 1 else { return picture }
+
+        // Радиус берётся от размера листа: он обязан быть заметно крупнее
+        // буквы, иначе размытие сохранит текст и деление его сотрёт.
+        let radius = Float(min(extent.width, extent.height) / 12)
+
+        let blur = CIFilter.boxBlur()
+        blur.inputImage = picture.clampedToExtent()
+        blur.radius = radius
+        guard let illumination = blur.outputImage?.cropped(to: extent) else { return picture }
+
+        let divide = CIFilter.divideBlendMode()
+        divide.inputImage = illumination
+        divide.backgroundImage = picture
+        guard let normalized = divide.outputImage else { return picture }
+
+        // После деления бумага выходит около единицы, но текст оказывается
+        // бледнее исходного. Подтяжка возвращает ему плотность.
+        let contrast = CIFilter.colorControls()
+        contrast.inputImage = normalized
+        contrast.contrast = 1.35
+        contrast.brightness = -0.04
+
+        return contrast.outputImage ?? normalized
     }
 
     private func rotated(_ picture: CIImage, by rotation: Rotation) -> CIImage {

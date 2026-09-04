@@ -143,14 +143,11 @@ struct LocalizationTests {
         for preset in ExportPreset.all {
             #expect(known.contains(preset.titleKey), "нет перевода пресета \(preset.id)")
         }
-        for mode in ColorMode.allCases {
-            #expect(known.contains(mode.titleKey), "нет перевода режима \(mode.rawValue)")
+        for look in PageLook.allCases {
+            #expect(known.contains(look.titleKey), "нет перевода вида \(look.rawValue)")
         }
         for kind in SensitiveKind.allCases {
             #expect(known.contains(kind.titleKey), "нет перевода вида данных \(kind.rawValue)")
-        }
-        for filter in PageFilter.allCases {
-            #expect(known.contains("filter.\(filter.rawValue)"), "нет перевода вида \(filter.rawValue)")
         }
     }
 }

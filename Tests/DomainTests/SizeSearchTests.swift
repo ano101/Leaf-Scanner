@@ -14,7 +14,7 @@ struct SizeSearchTests {
     func foundPlanFitsWithinLimit() {
         let result = SizeSearch.fit(
             limitBytes: 1_000_000,
-            colorMode: .color,
+            look: .color,
             measure: linearMeasure(fullWeight: 10_000_000)
         )
 
@@ -29,7 +29,7 @@ struct SizeSearchTests {
     func searchDoesNotGiveAwayMoreQualityThanNeeded() {
         let result = SizeSearch.fit(
             limitBytes: 5_000_000,
-            colorMode: .color,
+            look: .color,
             measure: linearMeasure(fullWeight: 10_000_000)
         )
 
@@ -40,12 +40,12 @@ struct SizeSearchTests {
         #expect(bytes <= 5_000_000)
         // Половина лимита означала бы, что качество отдано зря.
         #expect(bytes > 2_500_000)
-        #expect(plan.colorMode == .color)
+        #expect(plan.look == .color)
     }
 
     @Test("файл, влезающий без сжатия, отдаётся нетронутым")
     func fileThatAlreadyFitsIsLeftUntouched() {
-        let result = SizeSearch.fit(limitBytes: 10_000_000, colorMode: .color) { _ in 900_000 }
+        let result = SizeSearch.fit(limitBytes: 10_000_000, look: .color) { _ in 900_000 }
 
         guard case let .fitted(plan, _) = result else {
             Issue.record("ожидался подобранный план, пришло \(result)")
@@ -57,26 +57,26 @@ struct SizeSearchTests {
 
     @Test("недостижимый лимит в цвете предлагает серый, а не тупик")
     func unreachableLimitInColorSuggestsGray() {
-        let result = SizeSearch.fit(limitBytes: 500_000, colorMode: .color) { _ in 9_000_000 }
-        #expect(result == .needsWeakerColor(suggestion: .gray))
+        let result = SizeSearch.fit(limitBytes: 500_000, look: .color) { _ in 9_000_000 }
+        #expect(result == .needsLighterLook(suggestion: .gray))
     }
 
     @Test("недостижимый лимит в сером предлагает чёрно-белый")
     func unreachableLimitInGraySuggestsBlackAndWhite() {
-        let result = SizeSearch.fit(limitBytes: 500_000, colorMode: .gray) { _ in 9_000_000 }
-        #expect(result == .needsWeakerColor(suggestion: .blackAndWhite))
+        let result = SizeSearch.fit(limitBytes: 500_000, look: .gray) { _ in 9_000_000 }
+        #expect(result == .needsLighterLook(suggestion: .blackAndWhite))
     }
 
     @Test("в чёрно-белом предлагать больше нечего — честный отказ с лучшим весом")
     func blackAndWhiteHasNothingWeakerToSuggest() {
-        let result = SizeSearch.fit(limitBytes: 500_000, colorMode: .blackAndWhite) { _ in 9_000_000 }
+        let result = SizeSearch.fit(limitBytes: 500_000, look: .blackAndWhite) { _ in 9_000_000 }
         #expect(result == .impossible(bestBytes: 9_000_000))
     }
 
     @Test("поиск делает не больше шести измерений")
     func searchStaysWithinSixMeasurements() {
         let counter = MeasurementCounter()
-        _ = SizeSearch.fit(limitBytes: 1_000_000, colorMode: .color) { plan in
+        _ = SizeSearch.fit(limitBytes: 1_000_000, look: .color) { plan in
             counter.increment()
             return Int(10_000_000 * plan.quality * plan.scale)
         }
@@ -88,7 +88,7 @@ struct SizeSearchTests {
     @Test("нулевой лимит не зацикливает поиск")
     func zeroLimitDoesNotLoopForever() {
         let counter = MeasurementCounter()
-        let result = SizeSearch.fit(limitBytes: 0, colorMode: .blackAndWhite) { plan in
+        let result = SizeSearch.fit(limitBytes: 0, look: .blackAndWhite) { plan in
             counter.increment()
             return Int(10_000_000 * plan.quality * plan.scale)
         }

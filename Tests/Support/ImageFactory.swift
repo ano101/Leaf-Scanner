@@ -157,4 +157,73 @@ enum ImageFactory {
         }
         return image
     }
+
+    /// Лист с текстом, снятый при неровном свете: слева тень, справа
+    /// пересвет. Ровно то, что получается, когда человек снимает бумагу
+    /// на столе и заслоняет её собственной рукой.
+    ///
+    /// На таком снимке видно разницу между «подтянуть контраст» и «выровнять
+    /// освещение»: первое тень только усиливает, второе убирает.
+    static func shadowedDocument(width: Int = 600, height: Int = 800) -> CGImage {
+        let context = CGContext(
+            data: nil,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: 0,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue
+        )
+        guard let context else {
+            preconditionFailure("не удалось создать контекст рисования для теста")
+        }
+
+        context.setFillColor(CGColor(red: 1, green: 1, blue: 1, alpha: 1))
+        context.fill(CGRect(x: 0, y: 0, width: width, height: height))
+
+        // Строки текста: тёмные полосы по всей высоте листа.
+        context.setFillColor(CGColor(red: 0.1, green: 0.1, blue: 0.1, alpha: 1))
+        let lineHeight = CGFloat(height) / 40
+        for row in stride(from: 2, to: 38, by: 2) {
+            context.fill(CGRect(
+                x: CGFloat(width) * 0.1,
+                y: CGFloat(row) * lineHeight,
+                width: CGFloat(width) * 0.8,
+                height: lineHeight * 0.6
+            ))
+        }
+
+        guard let sheet = context.makeImage() else {
+            preconditionFailure("не удалось получить изображение из контекста")
+        }
+
+        // Тень накладывается умножением: слева света втрое меньше, чем справа.
+        guard let shaded = CGContext(
+            data: nil,
+            width: width,
+            height: height,
+            bitsPerComponent: 8,
+            bytesPerRow: 0,
+            space: CGColorSpaceCreateDeviceRGB(),
+            bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue
+        ) else {
+            preconditionFailure("не удалось создать контекст тени для теста")
+        }
+
+        shaded.draw(sheet, in: CGRect(x: 0, y: 0, width: width, height: height))
+        shaded.setBlendMode(.multiply)
+
+        let steps = 40
+        for step in 0..<steps {
+            let level = 0.33 + 0.67 * Double(step) / Double(steps - 1)
+            shaded.setFillColor(CGColor(red: level, green: level, blue: level, alpha: 1))
+            let stripe = CGFloat(width) / CGFloat(steps)
+            shaded.fill(CGRect(x: CGFloat(step) * stripe, y: 0, width: stripe + 1, height: CGFloat(height)))
+        }
+
+        guard let image = shaded.makeImage() else {
+            preconditionFailure("не удалось получить изображение из контекста тени")
+        }
+        return image
+    }
 }

@@ -6,7 +6,7 @@ import Testing
 @Suite("Подгон файла под заданный вес")
 struct SizeFitterTests {
     private func makePages(_ count: Int) -> [Page] {
-        (0..<count).map { Page(id: PageID(), order: $0, filter: .original) }
+        (0..<count).map { Page(id: PageID(), order: $0, look: .asShot) }
     }
 
     @Test("итоговый файл укладывается в предел даже когда без подгона не влезает")
@@ -17,7 +17,7 @@ struct SizeFitterTests {
         let source = CountingImageSource(size: (1400, 1800), pages: pages, allDetailed: true)
         let fitter = SizeFitter(source: source)
 
-        let outcome = try await fitter.fit(pages: pages, text: [:], limitBytes: 300_000, colorMode: .color)
+        let outcome = try await fitter.fit(pages: pages, text: [:], limitBytes: 300_000, look: .color)
 
         guard case let .fitted(result) = outcome else {
             Issue.record("ожидался подобранный файл, пришло \(outcome)")
@@ -34,7 +34,7 @@ struct SizeFitterTests {
         let source = CountingImageSource(size: (1600, 2000), pages: pages, allDetailed: true)
         let fitter = SizeFitter(source: source)
 
-        let outcome = try await fitter.fit(pages: pages, text: [:], limitBytes: 250_000, colorMode: .color)
+        let outcome = try await fitter.fit(pages: pages, text: [:], limitBytes: 250_000, look: .color)
 
         guard case let .fitted(result) = outcome else {
             Issue.record("ожидался подобранный файл, пришло \(outcome)")
@@ -50,7 +50,7 @@ struct SizeFitterTests {
         let source = CountingImageSource(size: (1200, 1600), pages: pages)
         let fitter = SizeFitter(source: source)
 
-        _ = try await fitter.fit(pages: pages, text: [:], limitBytes: 200_000, colorMode: .color)
+        _ = try await fitter.fit(pages: pages, text: [:], limitBytes: 200_000, look: .color)
 
         #expect(source.loadCount == pages.count)
     }
@@ -61,7 +61,7 @@ struct SizeFitterTests {
         let source = CountingImageSource(size: (800, 1000), pages: pages)
         let fitter = SizeFitter(source: source)
 
-        let outcome = try await fitter.fit(pages: pages, text: [:], limitBytes: 50_000_000, colorMode: .color)
+        let outcome = try await fitter.fit(pages: pages, text: [:], limitBytes: 50_000_000, look: .color)
 
         guard case let .fitted(result) = outcome else {
             Issue.record("ожидался подобранный файл, пришло \(outcome)")
@@ -77,9 +77,9 @@ struct SizeFitterTests {
         let source = CountingImageSource(size: (3000, 4000), pages: pages)
         let fitter = SizeFitter(source: source)
 
-        let outcome = try await fitter.fit(pages: pages, text: [:], limitBytes: 900, colorMode: .color)
+        let outcome = try await fitter.fit(pages: pages, text: [:], limitBytes: 900, look: .color)
 
-        guard case let .needsWeakerColor(suggestion) = outcome else {
+        guard case let .needsLighterLook(suggestion) = outcome else {
             Issue.record("ожидалось предложение сменить режим, пришло \(outcome)")
             return
         }
@@ -94,7 +94,7 @@ struct SizeFitterTests {
         let source = CountingImageSource(size: (1600, 2000), pages: pages, allDetailed: true)
         let fitter = SizeFitter(source: source, probeLongSide: 48)
 
-        let outcome = try await fitter.fit(pages: pages, text: [:], limitBytes: 220_000, colorMode: .color)
+        let outcome = try await fitter.fit(pages: pages, text: [:], limitBytes: 220_000, look: .color)
 
         // Требуется именно подобранный файл: предел достижим, и отказ здесь
         // означал бы, что приложение сдалось из-за собственной неточности,
@@ -113,7 +113,7 @@ struct SizeFitterTests {
         let source = CountingImageSource(size: (1000, 1000), pages: pages, detailedPageIndex: 1)
         let fitter = SizeFitter(source: source)
 
-        let outcome = try await fitter.fit(pages: pages, text: [:], limitBytes: 400_000, colorMode: .color)
+        let outcome = try await fitter.fit(pages: pages, text: [:], limitBytes: 400_000, look: .color)
 
         guard case let .fitted(result) = outcome else {
             Issue.record("ожидался подобранный файл, пришло \(outcome)")
@@ -127,7 +127,7 @@ struct SizeFitterTests {
         let fitter = SizeFitter(source: CountingImageSource(size: (10, 10), pages: []))
 
         await #expect(throws: PDFBuildError.self) {
-            _ = try await fitter.fit(pages: [], text: [:], limitBytes: 1000, colorMode: .color)
+            _ = try await fitter.fit(pages: [], text: [:], limitBytes: 1000, look: .color)
         }
     }
 }

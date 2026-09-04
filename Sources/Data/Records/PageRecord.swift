@@ -8,7 +8,7 @@ struct PageRecord: Codable, FetchableRecord, PersistableRecord, Sendable {
     var documentId: String
     var ordinal: Int
     var rotation: Int
-    var filter: String
+    var look: String
     var cropJson: String?
     var redactionsJson: String?
     /// SQLite хранит целые со знаком, поэтому хеш кладётся побитово
@@ -21,7 +21,7 @@ struct PageRecord: Codable, FetchableRecord, PersistableRecord, Sendable {
         self.documentId = documentId.raw.uuidString
         self.ordinal = page.order
         self.rotation = page.rotation.rawValue
-        self.filter = page.filter.rawValue
+        self.look = page.look.rawValue
         self.cropJson = try RecordCoding.encode(page.crop)
         self.redactionsJson = try RecordCoding.encode(page.redactions)
         self.perceptualHash = page.perceptualHash.map { Int64(bitPattern: $0) }
@@ -37,7 +37,7 @@ struct PageRecord: Codable, FetchableRecord, PersistableRecord, Sendable {
             id: PageID(uuid),
             order: ordinal,
             rotation: Rotation(rawValue: rotation) ?? .none,
-            filter: PageFilter(rawValue: filter) ?? .original,
+            look: PageLook(rawValue: look) ?? .color,
             crop: try RecordCoding.decode(NormalizedQuad.self, from: cropJson),
             redactions: try RecordCoding.decode([RedactionArea].self, from: redactionsJson) ?? [],
             perceptualHash: perceptualHash.map { UInt64(bitPattern: $0) },

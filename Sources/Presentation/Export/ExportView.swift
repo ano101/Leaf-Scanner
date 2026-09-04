@@ -76,16 +76,16 @@ public struct ExportView: View {
     }
 
     private var colorSection: some View {
-        Section("export.color") {
-            Picker("export.color", selection: Binding(
-                get: { model.colorMode },
+        Section("export.look") {
+            Picker("export.look", selection: Binding(
+                get: { model.look },
                 set: { newValue in
-                    model.colorMode = newValue
+                    model.look = newValue
                     Task { await model.prepare() }
                 }
             )) {
-                ForEach(ColorMode.allCases, id: \.self) { mode in
-                    Text(LocalizedStringKey(mode.titleKey)).tag(mode)
+                ForEach(PageLook.allCases, id: \.self) { look in
+                    Text(LocalizedStringKey(look.titleKey)).tag(look)
                 }
             }
             .pickerStyle(.segmented)

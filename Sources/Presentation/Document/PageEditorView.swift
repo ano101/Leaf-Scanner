@@ -170,9 +170,9 @@ struct PageEditorView: View {
                 }
 
                 Menu {
-                    ForEach(PageFilter.allCases, id: \.self) { filter in
-                        Button(LocalizedStringKey(filter.titleKey)) {
-                            Task { await model.setFilter(filter, for: pageID) }
+                    ForEach(PageLook.allCases, id: \.self) { look in
+                        Button(LocalizedStringKey(look.titleKey)) {
+                            Task { await model.setLook(look, for: pageID) }
                         }
                     }
                 } label: {

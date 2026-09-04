@@ -12,7 +12,7 @@ public final class ExportModel {
         case idle
         case working
         case ready(bytes: Int, heaviestPageNumber: Int?)
-        case suggestion(ColorMode, achievableIn: ColorMode)
+        case suggestion(PageLook, achievableIn: PageLook)
         case impossible(bestBytes: Int, heaviestPageNumber: Int?)
         case failed(messageKey: String)
     }
@@ -22,7 +22,7 @@ public final class ExportModel {
 
     public var presetID: String = ExportPreset.all.first?.id ?? ExportPreset.customKey
     public var customLimitMegabytes: Double = 1.0
-    public var colorMode: ColorMode = .color
+    public var look: PageLook = .color
     public var password: String = ""
 
     private let document: Document
@@ -34,7 +34,7 @@ public final class ExportModel {
 
         if let preset = ExportPreset.all.first {
             presetID = preset.id
-            colorMode = preset.colorMode
+            look = preset.look
         }
     }
 
@@ -56,7 +56,7 @@ public final class ExportModel {
     public func selectPreset(_ id: String) {
         presetID = id
         if let preset = ExportPreset.all.first(where: { $0.id == id }) {
-            colorMode = preset.colorMode
+            look = preset.look
         }
     }
 
@@ -65,7 +65,7 @@ public final class ExportModel {
     /// на него работу приложения.
     public func acceptSuggestion() async {
         guard case let .suggestion(_, achievable) = outcome else { return }
-        colorMode = achievable
+        look = achievable
         await prepare()
     }
 
@@ -83,7 +83,7 @@ public final class ExportModel {
                 pages: document.pages,
                 text: recognizedLines(),
                 limitBytes: limitBytes,
-                colorMode: colorMode,
+                look: look,
                 password: password.isEmpty ? nil : password
             )
 
@@ -91,8 +91,8 @@ public final class ExportModel {
             case let .fitted(fitted):
                 data = fitted.data
                 outcome = .ready(bytes: fitted.bytes, heaviestPageNumber: number(of: fitted.heaviestPageID))
-            case let .needsWeakerColor(suggestion):
-                outcome = .suggestion(colorMode, achievableIn: suggestion)
+            case let .needsLighterLook(suggestion):
+                outcome = .suggestion(look, achievableIn: suggestion)
             case let .impossible(bestBytes):
                 outcome = .impossible(bestBytes: bestBytes, heaviestPageNumber: nil)
             }

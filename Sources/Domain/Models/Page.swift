@@ -7,7 +7,7 @@ public struct Page: Identifiable, Hashable, Sendable, Codable {
     public let id: PageID
     public var order: Int
     public var rotation: Rotation
-    public var filter: PageFilter
+    public var look: PageLook
     public var crop: NormalizedQuad?
     public var redactions: [RedactionArea]
     public var perceptualHash: UInt64?
@@ -17,7 +17,7 @@ public struct Page: Identifiable, Hashable, Sendable, Codable {
         id: PageID = .init(),
         order: Int,
         rotation: Rotation = .none,
-        filter: PageFilter = .enhanced,
+        look: PageLook = .color,
         crop: NormalizedQuad? = nil,
         redactions: [RedactionArea] = [],
         perceptualHash: UInt64? = nil,
@@ -26,7 +26,7 @@ public struct Page: Identifiable, Hashable, Sendable, Codable {
         self.id = id
         self.order = order
         self.rotation = rotation
-        self.filter = filter
+        self.look = look
         self.crop = crop
         self.redactions = redactions
         self.perceptualHash = perceptualHash

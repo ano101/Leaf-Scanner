@@ -63,7 +63,7 @@ struct DocumentRepositoryTests {
     func pagePropertiesSurviveRoundTrip() async throws {
         let repository = try makeRepository()
         var page = PageFactory.page(order: 0, rotation: .left)
-        page.filter = .blackAndWhite
+        page.look = .blackAndWhite
         page.perceptualHash = 0xF0F0_F0F0_F0F0_F0F0
         page.recognizedText = "Иванов Иван"
         page.redactions = [RedactionArea(rect: NormalizedRect(x: 0.1, y: 0.2, width: 0.3, height: 0.4))]
@@ -73,7 +73,7 @@ struct DocumentRepositoryTests {
         let restored = try await repository.all(inFolder: nil).first?.pages.first
 
         #expect(restored?.rotation == .left)
-        #expect(restored?.filter == .blackAndWhite)
+        #expect(restored?.look == .blackAndWhite)
         #expect(restored?.perceptualHash == 0xF0F0_F0F0_F0F0_F0F0)
         #expect(restored?.recognizedText == "Иванов Иван")
         #expect(restored?.redactions.count == 1)
