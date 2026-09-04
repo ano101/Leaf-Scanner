@@ -7,13 +7,18 @@ public struct ExportView: View {
 
     private let documentName: String
 
-    public init(document: Document, services: AppServices) {
-        _model = State(initialValue: ExportModel(document: document, fitter: services.makeFitter()))
+    public init(document: Document, pageIDs: Set<PageID>? = nil, services: AppServices) {
+        _model = State(initialValue: ExportModel(
+            document: document,
+            pageIDs: pageIDs,
+            fitter: services.makeFitter()
+        ))
         self.documentName = document.name
     }
 
     public var body: some View {
         Form {
+            scopeSection
             presetSection
             if model.isCustomLimit { customSizeSection }
             colorSection
@@ -30,6 +35,22 @@ public struct ExportView: View {
         .task { await model.prepare() }
         .sheet(item: $shareURL) { url in
             ShareSheet(url: url)
+        }
+    }
+
+    /// Что именно уходит. Человек, пришедший из выделения, обязан видеть,
+    /// что отправятся не все страницы, — иначе он узнает об этом от
+    /// получателя.
+    private var scopeSection: some View {
+        Section("export.scope") {
+            Label {
+                Text(model.isPartial
+                     ? "export.scope.selected \(model.pages.count)"
+                     : "export.scope.whole \(model.pages.count)")
+            } icon: {
+                Image(systemName: model.isPartial ? "checkmark.circle" : "doc.on.doc")
+                    .foregroundStyle(Theme.accent)
+            }
         }
     }
 

@@ -11,6 +11,7 @@ public final class AppServices {
     public let search: SearchIndex
     public let store: PageStore
     public let thumbnails: ThumbnailLoader
+    public let renders: PageRenderCache
     public let importer: ScanImporter
     public let recognition: TextRecognitionWorker
     public let scanner: VisionKitScanSource
@@ -27,6 +28,7 @@ public final class AppServices {
         self.folders = FolderRepository(database: database)
         self.search = SearchIndex(database: database)
         self.thumbnails = ThumbnailLoader(store: store)
+        self.renders = PageRenderCache(store: store)
         self.importer = ScanImporter(store: store)
         self.recognition = TextRecognitionWorker(
             images: store,

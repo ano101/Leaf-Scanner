@@ -27,14 +27,33 @@ public final class ExportModel {
 
     private let document: Document
     private let fitter: SizeFitter
+    /// Какие страницы уходят. Пусто — значит весь документ: человек,
+    /// ничего не выделявший, ждёт целый документ, а не пустой файл.
+    public let pageIDs: Set<PageID>?
 
-    public init(document: Document, fitter: SizeFitter) {
+    public var pages: [Page] {
+        let ordered = PageOrdering.sorted(document.pages)
+        guard let pageIDs, pageIDs.isEmpty == false else { return ordered }
+        return PageOrdering.renumbered(ordered.filter { pageIDs.contains($0.id) })
+    }
+
+    public var isPartial: Bool {
+        pages.count < document.pages.count
+    }
+
+    public init(document: Document, pageIDs: Set<PageID>? = nil, fitter: SizeFitter) {
         self.document = document
+        self.pageIDs = pageIDs
         self.fitter = fitter
 
         if let preset = ExportPreset.all.first {
             presetID = preset.id
             look = preset.look
+        }
+        // Вид по умолчанию берётся у самого документа: человек уже выбрал
+        // его на странице, и переспрашивать одно и то же незачем.
+        if let first = document.pages.first {
+            look = first.look
         }
     }
 
@@ -80,7 +99,7 @@ public final class ExportModel {
 
         do {
             let result = try await fitter.fit(
-                pages: document.pages,
+                pages: pages,
                 text: recognizedLines(),
                 limitBytes: limitBytes,
                 look: look,
@@ -106,7 +125,7 @@ public final class ExportModel {
     private func recognizedLines() -> [PageID: [RecognizedLine]] {
         var lines: [PageID: [RecognizedLine]] = [:]
 
-        for page in document.pages {
+        for page in pages {
             guard let text = page.recognizedText, text.isEmpty == false else { continue }
 
             let rows = text.split(separator: "\n")
@@ -125,7 +144,7 @@ public final class ExportModel {
 
     private func number(of pageID: PageID?) -> Int? {
         guard let pageID else { return nil }
-        guard let index = PageOrdering.sorted(document.pages).firstIndex(where: { $0.id == pageID }) else {
+        guard let index = pages.firstIndex(where: { $0.id == pageID }) else {
             return nil
         }
         return index + 1

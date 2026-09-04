@@ -109,3 +109,85 @@ struct DocumentModelTests {
         #expect(model.pages.count == 3)
     }
 }
+
+@Suite("Выделение страниц")
+@MainActor
+struct PageSelectionTests {
+    private func makeModel(pageCount: Int = 3) async throws -> DocumentModel {
+        let repository = DocumentRepository(database: try AppDatabase.inMemory())
+        let document = Document(name: "Пачка", pages: PageFactory.pages(count: pageCount))
+        try await repository.save(document)
+        return DocumentModel(document: document, documents: repository)
+    }
+
+    @Test("нажатие добавляет и убирает страницу из выделения")
+    func tapAddsAndRemovesPage() async throws {
+        let model = try await makeModel()
+        let id = try #require(model.pages.first?.id)
+
+        model.toggleSelection(id)
+        #expect(model.selection == [id])
+
+        model.toggleSelection(id)
+        #expect(model.selection.isEmpty)
+    }
+
+    @Test("поворот применяется только к выделенным страницам")
+    func rotationTouchesOnlySelectedPages() async throws {
+        let model = try await makeModel()
+        let first = try #require(model.pages.first?.id)
+        model.toggleSelection(first)
+
+        await model.rotateSelectionRight()
+
+        #expect(model.pages.first?.rotation == .right)
+        #expect(model.pages.dropFirst().allSatisfy { $0.rotation == Rotation.none })
+    }
+
+    @Test("удаление выделенных убирает ровно их")
+    func deletingSelectionRemovesExactlyThose() async throws {
+        let model = try await makeModel()
+        let first = try #require(model.pages.first?.id)
+        let second = try #require(model.pages.dropFirst().first?.id)
+        model.toggleSelection(first)
+        model.toggleSelection(second)
+
+        await model.deleteSelection()
+
+        #expect(model.pages.count == 1)
+        #expect(model.selection.isEmpty)
+    }
+
+    @Test("удалить все страницы разом нельзя — вместо этого объяснение")
+    func deletingEveryPageIsRefusedWithAnExplanation() async throws {
+        let model = try await makeModel(pageCount: 2)
+        for page in model.pages { model.toggleSelection(page.id) }
+
+        await model.deleteSelection()
+
+        #expect(model.pages.count == 2)
+        #expect(model.state == .failed(messageKey: "document.error.lastPage"))
+    }
+
+    @Test("поворот влево обратен повороту вправо")
+    func leftRotationUndoesRight() async throws {
+        let model = try await makeModel()
+        let id = try #require(model.pages.first?.id)
+
+        await model.rotateRight(id)
+        await model.rotateLeft(id)
+
+        // Явный тип обязателен: «.none» без него Swift читает как «пусто»,
+        // и проверка сравнивает поворот с отсутствием значения.
+        #expect(model.pages.first?.rotation == Rotation.none)
+    }
+
+    @Test("вид применяется ко всем страницам разом")
+    func lookAppliesToEveryPage() async throws {
+        let model = try await makeModel()
+
+        await model.setLookForAllPages(.blackAndWhite)
+
+        #expect(model.pages.allSatisfy { $0.look == .blackAndWhite })
+    }
+}
