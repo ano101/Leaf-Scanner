@@ -3,14 +3,18 @@ import SwiftUI
 struct SettingsView: View {
     let settings: AppSettings
     let lock: AppLock
+    let expiry: ExpiryScheduler
 
     @Environment(\.dismiss) private var dismiss
     @State private var lockEnabled: Bool
+    @State private var remindersEnabled: Bool
 
-    init(settings: AppSettings, lock: AppLock) {
+    init(settings: AppSettings, lock: AppLock, expiry: ExpiryScheduler) {
         self.settings = settings
         self.lock = lock
+        self.expiry = expiry
         _lockEnabled = State(initialValue: lock.isEnabled)
+        _remindersEnabled = State(initialValue: settings.expiryRemindersEnabled)
     }
 
     var body: some View {
@@ -35,6 +39,26 @@ struct SettingsView: View {
                     }
             } footer: {
                 Text("settings.lock.hint")
+            }
+
+            Section {
+                Toggle("settings.expiry", isOn: $remindersEnabled)
+                    .onChange(of: remindersEnabled) { _, enabled in
+                        Task {
+                            // Разрешение спрашивается в момент включения,
+                            // а не при запуске: приложение, начинающее
+                            // со списка разрешений, получает отказ на всё.
+                            if enabled, await expiry.requestPermission() == false {
+                                remindersEnabled = false
+                                settings.expiryRemindersEnabled = false
+                                return
+                            }
+                            settings.expiryRemindersEnabled = enabled
+                            if enabled == false { await expiry.cancelAll() }
+                        }
+                    }
+            } footer: {
+                Text("settings.expiry.hint")
             }
 
             Section {

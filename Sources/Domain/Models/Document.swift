@@ -14,6 +14,9 @@ public struct Document: Identifiable, Hashable, Sendable {
     /// можно уточнить, когда распознавание найдёт заголовок; имя, введённое
     /// человеком, трогать нельзя никогда.
     public var isNameAutomatic: Bool
+    /// Дата окончания действия, найденная в тексте. Хранится у документа,
+    /// а не у страницы: истекает документ, а не лист бумаги.
+    public var expiresAt: Date?
 
     public init(
         id: DocumentID = .init(),
@@ -23,7 +26,8 @@ public struct Document: Identifiable, Hashable, Sendable {
         createdAt: Date = Date(),
         updatedAt: Date = Date(),
         pages: [Page] = [],
-        isNameAutomatic: Bool = true
+        isNameAutomatic: Bool = true,
+        expiresAt: Date? = nil
     ) {
         self.id = id
         self.name = name
@@ -33,6 +37,7 @@ public struct Document: Identifiable, Hashable, Sendable {
         self.updatedAt = updatedAt
         self.pages = pages
         self.isNameAutomatic = isNameAutomatic
+        self.expiresAt = expiresAt
     }
 
     public var pageCount: Int { pages.count }

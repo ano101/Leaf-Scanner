@@ -92,6 +92,12 @@ extension AppDatabase {
                 """)
         }
 
+        migrator.registerMigration("v5_expiry") { db in
+            try db.alter(table: "document") { table in
+                table.add(column: "expiresAt", .datetime)
+            }
+        }
+
         return migrator
     }
 }

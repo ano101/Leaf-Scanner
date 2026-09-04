@@ -17,6 +17,7 @@ public final class AppServices {
     public let scanner: VisionKitScanSource
     public let lock: AppLock
     public let settings: AppSettings
+    public let expiry: ExpiryScheduler
 
     public init(root: URL) throws {
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
@@ -39,6 +40,7 @@ public final class AppServices {
         self.scanner = VisionKitScanSource()
         self.lock = AppLock()
         self.settings = AppSettings()
+        self.expiry = ExpiryScheduler()
     }
 
     /// Хранилище лежит в поддержке приложения, а не в документах: файлы

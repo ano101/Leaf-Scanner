@@ -70,7 +70,13 @@ public struct PDFBuilder: Sendable {
             throw PDFBuildError.contextCreationFailed
         }
 
-        var documentInfo: [String: Any] = [:]
+        // В файле остаётся только имя приложения. Ни автора, ни модели
+        // устройства, ни места съёмки: скан договора с координатами
+        // квартиры в метаданных — обычное дело у приложений, которые
+        // просто перекладывают снимок в PDF.
+        var documentInfo: [String: Any] = [
+            kCGPDFContextCreator as String: AppInfo.name,
+        ]
         if let password, password.isEmpty == false {
             guard Self.isRepresentable(password) else {
                 throw PDFBuildError.passwordNotRepresentable

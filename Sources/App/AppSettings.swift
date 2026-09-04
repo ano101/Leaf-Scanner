@@ -28,6 +28,7 @@ public enum AppTheme: String, Sendable, CaseIterable, Codable {
 public final class AppSettings {
     private enum Key {
         static let theme = "settings.theme"
+        static let expiryReminders = "settings.expiryReminders"
     }
 
     private let defaults: UserDefaults
@@ -36,9 +37,14 @@ public final class AppSettings {
         didSet { defaults.set(theme.rawValue, forKey: Key.theme) }
     }
 
+    public var expiryRemindersEnabled: Bool {
+        didSet { defaults.set(expiryRemindersEnabled, forKey: Key.expiryReminders) }
+    }
+
     public init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         self.theme = defaults.string(forKey: Key.theme)
             .flatMap(AppTheme.init(rawValue:)) ?? .system
+        self.expiryRemindersEnabled = defaults.bool(forKey: Key.expiryReminders)
     }
 }

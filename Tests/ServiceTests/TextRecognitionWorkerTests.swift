@@ -156,3 +156,37 @@ struct DocumentNamingTests {
         #expect(stored.first { $0.name == "Само" }?.isNameAutomatic == true)
     }
 }
+
+@Suite("Срок действия в документе")
+struct DocumentExpiryTests {
+    @Test("признак срока переживает запись и чтение")
+    func expiryDateSurvivesRoundTrip() async throws {
+        let repository = DocumentRepository(database: try AppDatabase.inMemory())
+        let expiry = Date(timeIntervalSince1970: 1_900_000_000)
+
+        try await repository.save(Document(name: "Паспорт", expiresAt: expiry))
+        let stored = try await repository.all(inFolder: nil).first
+
+        #expect(stored?.expiresAt != nil)
+        #expect(abs((stored?.expiresAt ?? .distantPast).timeIntervalSince(expiry)) < 1)
+    }
+
+    @Test("документ без срока хранится без него, а не с выдуманной датой")
+    func documentWithoutExpiryStaysWithout() async throws {
+        let repository = DocumentRepository(database: try AppDatabase.inMemory())
+        try await repository.save(Document(name: "Договор"))
+
+        #expect(try await repository.all(inFolder: nil).first?.expiresAt == nil)
+    }
+
+    @Test("срок ищется по всему документу, а не только на первой странице")
+    func expiryIsSearchedAcrossTheWholeDocument() {
+        // В паспорте срок на развороте, в полисе — в конце. Разбор только
+        // первой страницы пропустил бы оба случая.
+        let pages = ["ПАСПОРТ", "Российская Федерация", "Действителен до 03.03.2030"]
+        let whole = pages.joined(separator: "\n")
+
+        #expect(ExpiryDetector().detect(in: whole) != nil)
+        #expect(ExpiryDetector().detect(in: pages[0]) == nil)
+    }
+}

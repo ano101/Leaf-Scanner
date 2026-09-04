@@ -28,6 +28,16 @@ public final class ExportModel {
 
     /// Имя файла берётся у документа: получателю приходит «Договор.pdf»,
     /// а не «document.pdf».
+    /// Сколько областей закрыто во всём, что уходит. Человек должен видеть
+    /// это до отправки, а не вспоминать, замазал ли он номер карты.
+    public var redactionCount: Int {
+        pages.reduce(0) { $0 + $1.redactions.count }
+    }
+
+    public var hasTextLayer: Bool {
+        format == .pdf && pages.contains { $0.recognizedText?.isEmpty == false }
+    }
+
     private var fileBaseName: String {
         let cleaned = document.name
             .replacingOccurrences(of: "/", with: "-")

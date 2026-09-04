@@ -45,6 +45,15 @@ public actor TextRecognitionWorker {
 
         guard changed else { return }
 
+        // Срок ищется по всему документу, а не только на первой странице:
+        // в паспорте он на развороте, в полисе — в конце.
+        if document.expiresAt == nil {
+            let whole = PageOrdering.sorted(document.pages)
+                .compactMap(\.recognizedText)
+                .joined(separator: "\n")
+            document.expiresAt = ExpiryDetector().detect(in: whole)
+        }
+
         // Документ создаётся под именем-датой, потому что заголовка ещё нет.
         // Как только текст разобран, имя уточняется — но только если человек
         // не назвал документ сам.

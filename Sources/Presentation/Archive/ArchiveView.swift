@@ -80,7 +80,7 @@ public struct ArchiveView: View {
             }
             .sheet(isPresented: $isShowingSettings) {
                 NavigationStack {
-                    SettingsView(settings: services.settings, lock: services.lock)
+                    SettingsView(settings: services.settings, lock: services.lock, expiry: services.expiry)
                 }
             }
             .navigationDestination(item: $openedDocument) { document in
@@ -370,11 +370,20 @@ public struct ArchiveView: View {
             // приложения — человек решит, что уточнение не работает.
             Task(priority: .utility) { [services] in
                 try? await services.recognition.process(documentID: document.id)
+                await scheduleExpiry(for: document.id)
                 await model.load()
             }
         } catch {
             importFailureKey = "archive.import.failed"
         }
+    }
+
+    /// Напоминания ставятся только если человек их включил: приложение,
+    /// которое начинает слать уведомления само, отключают целиком.
+    private func scheduleExpiry(for id: DocumentID) async {
+        guard services.settings.expiryRemindersEnabled else { return }
+        guard let document = try? await services.documents.document(id) else { return }
+        await services.expiry.schedule(for: document)
     }
 
     private func scan(duplex: Bool) async {
@@ -402,6 +411,7 @@ public struct ArchiveView: View {
             // а список обновляется, когда разбор закончен.
             Task(priority: .utility) { [services] in
                 try? await services.recognition.process(documentID: document.id)
+                await scheduleExpiry(for: document.id)
                 await model.load()
             }
         } catch {
@@ -441,7 +451,23 @@ struct DocumentRow: View {
 
             VStack(alignment: .leading, spacing: 3) {
                 PlainTitle(document.name).font(.headline)
-                Text("archive.pages \(document.pageCount)").documentSubtitleStyle()
+
+                if let expiry = document.expiresAt, let notice = ExpiryNotice(expiry: expiry) {
+                    // Срок показывается вместо числа страниц, а не рядом:
+                    // истекающий документ — единственное, что человеку важно
+                    // знать об этой строке прямо сейчас.
+                    Label {
+                        Text(notice.textKey)
+                    } icon: {
+                        Image(systemName: notice.iconName)
+                    }
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(notice.tint)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                } else {
+                    Text("archive.pages \(document.pageCount)").documentSubtitleStyle()
+                }
             }
 
             Spacer(minLength: 0)
@@ -454,5 +480,31 @@ struct DocumentRow: View {
         }
         .padding(.vertical, 4)
         .contentShape(Rectangle())
+    }
+}
+
+
+/// Как показать срок в списке. Показывается только то, что требует
+/// действия: срок через год человеку в списке не нужен, он лишь занимает
+/// строку и приучает не читать её.
+struct ExpiryNotice {
+    let textKey: LocalizedStringKey
+    let iconName: String
+    let tint: Color
+
+    init?(expiry: Date, now: Date = Date()) {
+        if ExpiryReminder.isExpired(expiry, now: now) {
+            textKey = "expiry.expired"
+            iconName = "exclamationmark.triangle.fill"
+            tint = .red
+            return
+        }
+
+        guard ExpiryReminder.isExpiringSoon(expiry, now: now) else { return nil }
+
+        let days = max(Calendar.current.dateComponents([.day], from: now, to: expiry).day ?? 0, 0)
+        textKey = "expiry.soon \(days)"
+        iconName = "clock.badge.exclamationmark"
+        tint = .orange
     }
 }

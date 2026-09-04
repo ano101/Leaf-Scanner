@@ -168,6 +168,7 @@ public struct ExportView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
+                recipientSummary
                 actions(bytes: bytes)
 
             case let .suggestion(_, achievable):
@@ -201,6 +202,38 @@ public struct ExportView: View {
                     .tint(Theme.accent)
                 }
             }
+        }
+    }
+
+    /// Что именно увидит получатель. Отправка — это единственный момент,
+    /// когда содержимое покидает устройство, и человек имеет право знать,
+    /// что именно уходит, до нажатия, а не после.
+    private var recipientSummary: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            summaryRow(icon: "doc", key: LocalizedStringKey("export.recipient.files \(model.files.count)"))
+
+            if model.redactionCount > 0 {
+                summaryRow(
+                    icon: "eye.slash",
+                    key: LocalizedStringKey("export.recipient.redactions \(model.redactionCount)")
+                )
+            }
+
+            if model.hasTextLayer {
+                summaryRow(icon: "text.magnifyingglass", key: "export.recipient.text")
+            }
+
+            summaryRow(icon: "location.slash", key: "export.recipient.metadata")
+        }
+        .font(.footnote)
+        .foregroundStyle(.secondary)
+    }
+
+    private func summaryRow(icon: String, key: LocalizedStringKey) -> some View {
+        Label {
+            Text(key)
+        } icon: {
+            Image(systemName: icon).foregroundStyle(Theme.accent)
         }
     }
 
