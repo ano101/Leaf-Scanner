@@ -2,7 +2,7 @@ import SwiftUI
 
 public struct ExportView: View {
     @State private var model: ExportModel
-    @State private var shareURL: URL?
+    @State private var shareItems: ShareItems?
     @Environment(\.dismiss) private var dismiss
 
     private let documentName: String
@@ -19,6 +19,7 @@ public struct ExportView: View {
     public var body: some View {
         Form {
             scopeSection
+            formatSection
             presetSection
             if model.isCustomLimit { customSizeSection }
             colorSection
@@ -33,8 +34,8 @@ public struct ExportView: View {
             }
         }
         .task { await model.prepare() }
-        .sheet(item: $shareURL) { url in
-            ShareSheet(url: url)
+        .sheet(item: $shareItems) { items in
+            ShareSheet(urls: items.urls)
         }
     }
 
@@ -51,6 +52,24 @@ public struct ExportView: View {
                 Image(systemName: model.isPartial ? "checkmark.circle" : "doc.on.doc")
                     .foregroundStyle(Theme.accent)
             }
+        }
+    }
+
+    private var formatSection: some View {
+        Section("export.format") {
+            Picker("export.format", selection: Binding(
+                get: { model.format },
+                set: { newValue in
+                    model.format = newValue
+                    Task { await model.prepare() }
+                }
+            )) {
+                ForEach(ExportFormat.allCases, id: \.self) { format in
+                    Text(LocalizedStringKey(format.titleKey)).tag(format)
+                }
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
         }
     }
 
@@ -187,17 +206,23 @@ public struct ExportView: View {
 
     @ViewBuilder
     private func actions(bytes: Int) -> some View {
-        if let data = model.data {
+        if model.files.isEmpty == false {
             Button {
-                shareURL = try? ExportDelivery.writeTemporaryFile(data, name: documentName)
+                if let urls = try? ExportDelivery.writeTemporaryFiles(model.files) {
+                    shareItems = ShareItems(urls: urls)
+                }
             } label: {
                 Label("export.share", systemImage: "square.and.arrow.up")
             }
 
-            Button {
-                ExportDelivery.print(data, name: documentName)
-            } label: {
-                Label("export.print", systemImage: "printer")
+            // Печать берёт первый файл: печатать пачку изображений
+            // по одному человек не просил, а PDF всегда один.
+            if let first = model.files.first {
+                Button {
+                    ExportDelivery.print(first.data, name: documentName)
+                } label: {
+                    Label("export.print", systemImage: "printer")
+                }
             }
         }
     }
@@ -208,15 +233,18 @@ public struct ExportView: View {
 /// приходится файлом на диске: получатель должен получить документ, а не
 /// снимок экрана.
 private struct ShareSheet: UIViewControllerRepresentable {
-    let url: URL
+    let urls: [URL]
 
     func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: [url], applicationActivities: nil)
+        UIActivityViewController(activityItems: urls, applicationActivities: nil)
     }
 
     func updateUIViewController(_ controller: UIActivityViewController, context: Context) {}
 }
 
-extension URL: @retroactive Identifiable {
-    public var id: String { absoluteString }
+/// Набор файлов для отправки. Отдельный тип нужен, потому что модальному
+/// окну требуется опознаваемое значение, а массив им не является.
+private struct ShareItems: Identifiable {
+    let urls: [URL]
+    var id: String { urls.map(\.lastPathComponent).joined(separator: "|") }
 }

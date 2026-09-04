@@ -21,6 +21,9 @@ public final class ArchiveModel {
 
     public var query: String = ""
     public var folderID: FolderID?
+    /// Выделенные документы. Отдельно от списка, потому что список
+    /// перечитывается, а выбор человека переживать это обязан.
+    public var selection: Set<DocumentID> = []
 
     private let documents: any DocumentRepositoryProtocol
     private let folderStore: any FolderRepositoryProtocol
@@ -73,6 +76,64 @@ public final class ArchiveModel {
             hits = []
             state = .failed(messageKey: "archive.error.search")
         }
+    }
+
+    public func toggleSelection(_ id: DocumentID) {
+        if selection.contains(id) {
+            selection.remove(id)
+        } else {
+            selection.insert(id)
+        }
+    }
+
+    /// Объединение в порядке, в котором документы лежат на экране, а не
+    /// в порядке нажатий: человек видит список сверху вниз и ждёт того же
+    /// порядка страниц.
+    public func mergeSelection(into name: String) async {
+        let chosen = orderedSelection()
+        guard chosen.count > 1 else {
+            state = .failed(messageKey: "archive.error.mergeOne")
+            return
+        }
+
+        let trimmed = name.trimmingCharacters(in: .whitespaces)
+        do {
+            _ = try await documents.merge(chosen, into: trimmed.isEmpty ? defaultMergeName() : trimmed)
+            selection = []
+            await load()
+        } catch {
+            state = .failed(messageKey: "archive.error.merge")
+        }
+    }
+
+    public func deleteSelection() async {
+        let chosen = selection
+        guard chosen.isEmpty == false else { return }
+
+        do {
+            for id in chosen {
+                try await documents.delete(id)
+            }
+            selection = []
+            await load()
+        } catch {
+            state = .failed(messageKey: "archive.error.delete")
+        }
+    }
+
+    /// Имя по умолчанию берётся у первого документа: «Объединённый» ничего
+    /// не говорит человеку, который через месяц ищет этот документ глазами.
+    public func defaultMergeName() -> String {
+        orderedDocuments().first { selection.contains($0.id) }?.name
+            ?? ScanImporter.suggestedName(from: nil, date: now())
+    }
+
+    private func orderedSelection() -> [DocumentID] {
+        orderedDocuments().map(\.id).filter { selection.contains($0) }
+    }
+
+    private func orderedDocuments() -> [Document] {
+        groups.flatMap(\.documents)
     }
 
     public func delete(_ id: DocumentID) async {

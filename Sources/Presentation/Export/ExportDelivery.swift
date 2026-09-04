@@ -7,6 +7,14 @@ import UIKit
 /// в одном месте выход позволит потом добавить снятие метаданных одной
 /// правкой, а не пятью.
 public enum ExportDelivery {
+    public static func writeTemporaryFiles(_ files: [ExportFile]) throws -> [URL] {
+        try files.map { file in
+            let url = FileManager.default.temporaryDirectory.appendingPathComponent(file.name)
+            try file.data.write(to: url, options: .atomic)
+            return url
+        }
+    }
+
     public static func writeTemporaryFile(_ data: Data, name: String) throws -> URL {
         let safeName = name
             .replacingOccurrences(of: "/", with: "-")

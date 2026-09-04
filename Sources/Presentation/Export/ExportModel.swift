@@ -18,12 +18,22 @@ public final class ExportModel {
     }
 
     public private(set) var outcome: Outcome = .idle
-    public private(set) var data: Data?
+    public private(set) var files: [ExportFile] = []
 
     public var presetID: String = ExportPreset.all.first?.id ?? ExportPreset.customKey
     public var customLimitMegabytes: Double = 1.0
     public var look: PageLook = .color
     public var password: String = ""
+    public var format: ExportFormat = .pdf
+
+    /// Имя файла берётся у документа: получателю приходит «Договор.pdf»,
+    /// а не «document.pdf».
+    private var fileBaseName: String {
+        let cleaned = document.name
+            .replacingOccurrences(of: "/", with: "-")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return cleaned.isEmpty ? "document" : cleaned
+    }
 
     private let document: Document
     private let fitter: SizeFitter
@@ -94,8 +104,15 @@ public final class ExportModel {
             return
         }
 
+        // Пароль относится только к PDF: у изображения его положить некуда,
+        // и обещать защиту, которой не будет, нельзя.
+        if format == .jpeg, password.isEmpty == false {
+            outcome = .failed(messageKey: "export.error.passwordFormat")
+            return
+        }
+
         outcome = .working
-        data = nil
+        files = []
 
         do {
             let result = try await fitter.fit(
@@ -103,12 +120,14 @@ public final class ExportModel {
                 text: recognizedLines(),
                 limitBytes: limitBytes,
                 look: look,
-                password: password.isEmpty ? nil : password
+                password: password.isEmpty ? nil : password,
+                format: format,
+                baseName: fileBaseName
             )
 
             switch result {
             case let .fitted(fitted):
-                data = fitted.data
+                files = fitted.files
                 outcome = .ready(bytes: fitted.bytes, heaviestPageNumber: number(of: fitted.heaviestPageID))
             case let .needsLighterLook(suggestion):
                 outcome = .suggestion(look, achievableIn: suggestion)

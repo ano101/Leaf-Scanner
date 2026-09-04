@@ -48,7 +48,7 @@ struct ExportModelTests {
             return
         }
         #expect(bytes > 0)
-        #expect(model.data?.count == bytes)
+        #expect(model.files.totalBytes == bytes)
     }
 
     @Test("недостижимый предел даёт предложение, а не тупик")
@@ -86,7 +86,7 @@ struct ExportModelTests {
         await model.prepare()
 
         #expect(model.outcome == .failed(messageKey: "export.error.password"))
-        #expect(model.data == nil)
+        #expect(model.files.isEmpty)
     }
 
     @Test("самая тяжёлая страница названа номером, а не идентификатором")

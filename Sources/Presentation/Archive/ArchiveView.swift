@@ -9,6 +9,9 @@ public struct ArchiveView: View {
     @State private var photoSelection: [PhotosPickerItem] = []
     @State private var isChoosingFile = false
     @State private var isPickingPhotos = false
+    @State private var isSelecting = false
+    @State private var isMerging = false
+    @State private var mergeName = ""
     @State private var importFailureKey: String?
 
     private let services: AppServices
@@ -46,6 +49,14 @@ public struct ArchiveView: View {
                             isCreatingFolder = true
                         } label: {
                             Label("archive.folder.new", systemImage: "folder.badge.plus")
+                        }
+
+                        Button {
+                            isSelecting.toggle()
+                            if isSelecting == false { model.selection = [] }
+                        } label: {
+                            Label(isSelecting ? "common.selection.done" : "common.select",
+                                  systemImage: "checkmark.circle")
                         }
 
                         Divider()
@@ -158,9 +169,19 @@ public struct ArchiveView: View {
                 Section(LocalizedStringKey(group.titleKey)) {
                     ForEach(group.documents) { document in
                         Button {
-                            openedDocument = document
+                            if isSelecting {
+                                model.toggleSelection(document.id)
+                            } else {
+                                openedDocument = document
+                            }
                         } label: {
-                            DocumentRow(document: document, loader: services.thumbnails)
+                            DocumentRow(
+                                document: document,
+                                loader: services.thumbnails,
+                                selection: isSelecting
+                                    ? (model.selection.contains(document.id) ? .chosen : .available)
+                                    : .off
+                            )
                         }
                         .buttonStyle(.plain)
                         .swipeActions {
@@ -218,6 +239,33 @@ public struct ArchiveView: View {
             }
             .buttonStyle(.secondaryAccent)
         }
+        .padding(.horizontal, 16)
+        .padding(.bottom, 8)
+        .background(.bar)
+    }
+
+    /// Действия над выделенными документами. Объединение было написано
+    /// и покрыто тестами с самого начала, но нажать его было негде —
+    /// для человека функции не существовало.
+    private var selectionActions: some View {
+        HStack(spacing: 10) {
+            Button {
+                mergeName = model.defaultMergeName()
+                isMerging = true
+            } label: {
+                Label("archive.merge", systemImage: "square.stack")
+            }
+            .buttonStyle(.prominentAccent)
+
+            Button(role: .destructive) {
+                Task { await model.deleteSelection() }
+            } label: {
+                Label("common.delete", systemImage: "trash")
+                    .labelStyle(.iconOnly)
+            }
+            .buttonStyle(.secondaryAccent)
+        }
+        .disabled(model.selection.isEmpty)
         .padding(.horizontal, 16)
         .padding(.bottom, 8)
         .background(.bar)
@@ -312,11 +360,24 @@ public struct ArchiveView: View {
 }
 
 struct DocumentRow: View {
+    enum Selection {
+        case off
+        case available
+        case chosen
+    }
+
     let document: Document
     let loader: ThumbnailLoader
+    var selection: Selection = .off
 
     var body: some View {
         HStack(spacing: 12) {
+            if selection != .off {
+                Image(systemName: selection == .chosen ? "checkmark.circle.fill" : "circle")
+                    .font(.title3)
+                    .foregroundStyle(selection == .chosen ? Theme.accent : .secondary)
+            }
+
             Group {
                 if let first = PageOrdering.sorted(document.pages).first {
                     PageThumbnail(pageID: first.id, loader: loader)
@@ -333,9 +394,11 @@ struct DocumentRow: View {
 
             Spacer(minLength: 0)
 
-            Image(systemName: "chevron.right")
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(.tertiary)
+            if selection == .off {
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
         }
         .padding(.vertical, 4)
         .contentShape(Rectangle())

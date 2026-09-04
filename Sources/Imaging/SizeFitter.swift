@@ -6,12 +6,20 @@ public protocol PageImageSource: Sendable {
 }
 
 public struct SizeFitResult: Sendable {
-    public let data: Data
+    /// Готовые файлы. PDF даёт один, JPEG — по одному на страницу.
+    public let files: [ExportFile]
     public let plan: ExportPlan
     public let bytes: Int
     /// Самая тяжёлая страница. Человеку нужно не только «не влезает»,
     /// но и что именно с этим делать.
     public let heaviestPageID: PageID?
+
+    public init(files: [ExportFile], plan: ExportPlan, bytes: Int, heaviestPageID: PageID?) {
+        self.files = files
+        self.plan = plan
+        self.bytes = bytes
+        self.heaviestPageID = heaviestPageID
+    }
 }
 
 public enum SizeFitOutcome: Sendable {
@@ -56,7 +64,9 @@ public struct SizeFitter: Sendable {
         text: [PageID: [RecognizedLine]],
         limitBytes: Int,
         look: PageLook,
-        password: String? = nil
+        password: String? = nil,
+        format: ExportFormat = .pdf,
+        baseName: String = "document"
     ) async throws -> SizeFitOutcome {
         guard pages.isEmpty == false else { throw PDFBuildError.noPages }
 
@@ -81,7 +91,7 @@ public struct SizeFitter: Sendable {
         let ratio = probePixels > 0 ? fullPixels / probePixels : 1.0
 
         let outcome = SizeSearch.fit(limitBytes: limitBytes, look: look) { plan in
-            let bytes = (try? measure(pages: pages, images: probes, text: text, plan: plan)) ?? Int.max
+            let bytes = (try? measure(pages: pages, images: probes, text: text, plan: plan, format: format)) ?? Int.max
             return bytes == Int.max ? Int.max : Int(Double(bytes) * ratio)
         }
 
@@ -92,7 +102,8 @@ public struct SizeFitter: Sendable {
             // получится», самый сжатый вариант собирается по-настоящему.
             if let rescued = try rescue(
                 pages: pages, images: originals, probes: probes, text: text,
-                limitBytes: limitBytes, look: look, password: password
+                limitBytes: limitBytes, look: look, password: password,
+                format: format, baseName: baseName
             ) {
                 return .fitted(rescued)
             }
@@ -101,7 +112,8 @@ public struct SizeFitter: Sendable {
         case .impossible(let bestBytes):
             if let rescued = try rescue(
                 pages: pages, images: originals, probes: probes, text: text,
-                limitBytes: limitBytes, look: look, password: password
+                limitBytes: limitBytes, look: look, password: password,
+                format: format, baseName: baseName
             ) {
                 return .fitted(rescued)
             }
@@ -109,17 +121,18 @@ public struct SizeFitter: Sendable {
 
         case .fitted(let plan, let estimate):
             var chosen = plan
-            var data = try build(pages: pages, images: originals, text: text, plan: chosen, password: password)
+            var files = try build(pages: pages, images: originals, text: text, plan: chosen, password: password, format: format, baseName: baseName)
+            var data = files.totalBytes
 
             // Оценка по пробам могла оказаться оптимистичной. Обещать вес
             // и отдать файл тяжелее обещанного нельзя: человек узнает об этом
             // от почтового ящика, который откажется его принять. Поэтому
             // оценка калибруется настоящим весом и подбор повторяется — но
             // не более одного раза, чтобы ожидание оставалось коротким.
-            if data.count > limitBytes {
-                let correction = Double(data.count) / Double(max(estimate, 1))
+            if data > limitBytes {
+                let correction = Double(data) / Double(max(estimate, 1))
                 let calibrated = SizeSearch.fit(limitBytes: limitBytes, look: look) { candidate in
-                    let bytes = (try? measure(pages: pages, images: probes, text: text, plan: candidate)) ?? Int.max
+                    let bytes = (try? measure(pages: pages, images: probes, text: text, plan: candidate, format: format)) ?? Int.max
                     return bytes == Int.max ? Int.max : Int(Double(bytes) * ratio * correction)
                 }
 
@@ -130,7 +143,8 @@ public struct SizeFitter: Sendable {
                     return .impossible(bestBytes: bestBytes)
                 case .fitted(let secondPlan, _):
                     chosen = secondPlan
-                    data = try build(pages: pages, images: originals, text: text, plan: chosen, password: password)
+                    files = try build(pages: pages, images: originals, text: text, plan: chosen, password: password, format: format, baseName: baseName)
+                    data = files.totalBytes
                 }
             }
 
@@ -138,30 +152,31 @@ public struct SizeFitter: Sendable {
             // может разойтись с настоящим весом настолько, что подбор
             // остановится раньше времени, — но у самого сжатого плана
             // проверять уже нечего, он либо влезает, либо нет.
-            if data.count > limitBytes {
+            if data > limitBytes {
                 let smallest = SizeSearch.smallestPlan(look: look)
-                let smallestData = try build(pages: pages, images: originals, text: text, plan: smallest, password: password)
-                if smallestData.count <= limitBytes {
+                let smallestFiles = try build(pages: pages, images: originals, text: text, plan: smallest, password: password, format: format, baseName: baseName)
+                if smallestFiles.totalBytes <= limitBytes {
                     chosen = smallest
-                    data = smallestData
+                    files = smallestFiles
+                    data = smallestFiles.totalBytes
                 }
             }
 
             // Даже так предел может остаться недостижимым. Честный отказ
             // с настоящим весом полезнее файла, который не примут.
-            guard data.count <= limitBytes else {
+            guard data <= limitBytes else {
                 if let lighter = look.lighter {
                     return .needsLighterLook(suggestion: lighter)
                 }
-                return .impossible(bestBytes: data.count)
+                return .impossible(bestBytes: data)
             }
 
-            let heaviest = try heaviestPage(pages: pages, images: probes, text: text, plan: chosen)
+            let heaviest = try heaviestPage(pages: pages, images: probes, text: text, plan: chosen, format: format)
 
             return .fitted(SizeFitResult(
-                data: data,
+                files: files,
                 plan: chosen,
-                bytes: data.count,
+                bytes: data,
                 heaviestPageID: heaviest
             ))
         }
@@ -176,17 +191,19 @@ public struct SizeFitter: Sendable {
         text: [PageID: [RecognizedLine]],
         limitBytes: Int,
         look: PageLook,
-        password: String?
+        password: String?,
+        format: ExportFormat,
+        baseName: String
     ) throws -> SizeFitResult? {
         let smallest = SizeSearch.smallestPlan(look: look)
-        let data = try build(pages: pages, images: images, text: text, plan: smallest, password: password)
-        guard data.count <= limitBytes else { return nil }
+        let files = try build(pages: pages, images: images, text: text, plan: smallest, password: password, format: format, baseName: baseName)
+        guard files.totalBytes <= limitBytes else { return nil }
 
         return SizeFitResult(
-            data: data,
+            files: files,
             plan: smallest,
-            bytes: data.count,
-            heaviestPageID: try heaviestPage(pages: pages, images: probes, text: text, plan: smallest)
+            bytes: files.totalBytes,
+            heaviestPageID: try heaviestPage(pages: pages, images: probes, text: text, plan: smallest, format: format)
         )
     }
 
@@ -194,9 +211,10 @@ public struct SizeFitter: Sendable {
         pages: [Page],
         images: [PageID: CGImage],
         text: [PageID: [RecognizedLine]],
-        plan: ExportPlan
+        plan: ExportPlan,
+        format: ExportFormat
     ) throws -> Int {
-        try build(pages: pages, images: images, text: text, plan: plan).count
+        try build(pages: pages, images: images, text: text, plan: plan, format: format, baseName: "probe").totalBytes
     }
 
     /// Пароль применяется только к настоящим сборкам: пробы существуют ради
@@ -206,9 +224,12 @@ public struct SizeFitter: Sendable {
         images: [PageID: CGImage],
         text: [PageID: [RecognizedLine]],
         plan: ExportPlan,
-        password: String? = nil
-    ) throws -> Data {
-        let rendered = try PageOrdering.sorted(pages).map { page -> RenderedPage in
+        password: String? = nil,
+        format: ExportFormat,
+        baseName: String
+    ) throws -> [ExportFile] {
+        let ordered = PageOrdering.sorted(pages)
+        let rendered = try ordered.map { page -> RenderedPage in
             guard let image = images[page.id] else {
                 throw PageStoreError.pageNotFound(page.id)
             }
@@ -219,7 +240,21 @@ public struct SizeFitter: Sendable {
             )
         }
 
-        return try builder.build(pages: rendered, password: password)
+        switch format {
+        case .pdf:
+            let data = try builder.build(pages: rendered, password: password)
+            return [ExportFile(name: "\(baseName).pdf", data: data)]
+
+        case .jpeg:
+            // Замазка уже уничтожена в пикселях рендерером, а текстового
+            // слоя у изображения нет вовсе — закрытое не утечёт.
+            return try rendered.enumerated().map { index, page in
+                ExportFile(
+                    name: rendered.count == 1 ? "\(baseName).jpg" : "\(baseName)-\(index + 1).jpg",
+                    data: try JPEGWriter.encode(page.image, quality: plan.quality)
+                )
+            }
+        }
     }
 
     /// Вес считается по пробным копиям: сравнение относительное,
@@ -228,12 +263,13 @@ public struct SizeFitter: Sendable {
         pages: [Page],
         images: [PageID: CGImage],
         text: [PageID: [RecognizedLine]],
-        plan: ExportPlan
+        plan: ExportPlan,
+        format: ExportFormat
     ) throws -> PageID? {
         var heaviest: (id: PageID, bytes: Int)?
 
         for page in pages {
-            let bytes = try measure(pages: [page], images: images, text: text, plan: plan)
+            let bytes = try measure(pages: [page], images: images, text: text, plan: plan, format: format)
             if heaviest == nil || bytes > heaviest!.bytes {
                 heaviest = (page.id, bytes)
             }
@@ -264,5 +300,14 @@ public struct SizeFitter: Sendable {
         context.draw(image, in: CGRect(x: 0, y: 0, width: width, height: height))
 
         return context.makeImage() ?? image
+    }
+}
+
+
+extension [ExportFile] {
+    /// Вес всего, что уйдёт. Для JPEG это сумма: человеку важен не самый
+    /// большой файл, а всё вложение целиком.
+    var totalBytes: Int {
+        reduce(0) { $0 + $1.data.count }
     }
 }

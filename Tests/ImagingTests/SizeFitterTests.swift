@@ -24,7 +24,7 @@ struct SizeFitterTests {
             return
         }
         #expect(result.bytes <= 300_000)
-        #expect(result.data.isEmpty == false)
+        #expect(result.files.isEmpty == false)
         #expect(result.plan.scale < 1.0, "подбор обязан был уменьшить страницы")
     }
 
@@ -40,8 +40,8 @@ struct SizeFitterTests {
             Issue.record("ожидался подобранный файл, пришло \(outcome)")
             return
         }
-        #expect(result.bytes == result.data.count)
-        #expect(result.data.count <= 250_000)
+        #expect(result.bytes == result.files.totalBytes)
+        #expect(result.files.totalBytes <= 250_000)
     }
 
     @Test("оригиналы читаются по одному разу на страницу, а не на каждое измерение")
@@ -103,7 +103,7 @@ struct SizeFitterTests {
             Issue.record("оценка разошлась с настоящим весом и подбор сдался: \(outcome)")
             return
         }
-        #expect(result.data.count <= 220_000)
+        #expect(result.files.totalBytes <= 220_000)
     }
 
     @Test("самая тяжёлая страница названа — человеку есть что с ней сделать")
@@ -162,6 +162,103 @@ private final class CountingImageSource: PageImageSource, @unchecked Sendable {
     func image(for id: PageID) async throws -> CGImage {
         lock.withLock { count += 1 }
 
+        guard let image = images[id] else { throw PageStoreError.pageNotFound(id) }
+        return image
+    }
+}
+
+@Suite("Формат выгрузки")
+struct ExportFormatTests {
+    private func pages(_ count: Int) -> [Page] {
+        (0..<count).map { Page(order: $0, look: .asShot) }
+    }
+
+    @Test("PDF даёт один файл на весь документ")
+    func pdfGivesOneFileForTheWholeDocument() async throws {
+        let list = pages(3)
+        let fitter = SizeFitter(source: PlainSource(pages: list))
+
+        let outcome = try await fitter.fit(
+            pages: list, text: [:], limitBytes: 20_000_000,
+            look: .asShot, format: .pdf, baseName: "Договор"
+        )
+
+        guard case let .fitted(result) = outcome else {
+            Issue.record("ожидался готовый файл, пришло \(outcome)")
+            return
+        }
+        #expect(result.files.count == 1)
+        #expect(result.files.first?.name == "Договор.pdf")
+    }
+
+    @Test("JPEG даёт по файлу на страницу с номерами в именах")
+    func jpegGivesOneFilePerPageWithNumberedNames() async throws {
+        let list = pages(3)
+        let fitter = SizeFitter(source: PlainSource(pages: list))
+
+        let outcome = try await fitter.fit(
+            pages: list, text: [:], limitBytes: 20_000_000,
+            look: .asShot, format: .jpeg, baseName: "Паспорт"
+        )
+
+        guard case let .fitted(result) = outcome else {
+            Issue.record("ожидался готовый файл, пришло \(outcome)")
+            return
+        }
+        #expect(result.files.count == 3)
+        #expect(result.files.map(\.name) == ["Паспорт-1.jpg", "Паспорт-2.jpg", "Паспорт-3.jpg"])
+    }
+
+    @Test("одна страница в JPEG не получает лишнего номера в имени")
+    func singlePageJpegKeepsAPlainName() async throws {
+        let list = pages(1)
+        let fitter = SizeFitter(source: PlainSource(pages: list))
+
+        let outcome = try await fitter.fit(
+            pages: list, text: [:], limitBytes: 20_000_000,
+            look: .asShot, format: .jpeg, baseName: "Счёт"
+        )
+
+        guard case let .fitted(result) = outcome else {
+            Issue.record("ожидался готовый файл, пришло \(outcome)")
+            return
+        }
+        #expect(result.files.map(\.name) == ["Счёт.jpg"])
+    }
+
+    @Test("предел веса считается по всем файлам вместе, а не по самому большому")
+    func limitCountsEveryFileTogether() async throws {
+        let list = pages(4)
+        let fitter = SizeFitter(source: PlainSource(pages: list, detailed: true))
+
+        let outcome = try await fitter.fit(
+            pages: list, text: [:], limitBytes: 400_000,
+            look: .color, format: .jpeg, baseName: "Пачка"
+        )
+
+        guard case let .fitted(result) = outcome else {
+            Issue.record("ожидался готовый файл, пришло \(outcome)")
+            return
+        }
+        #expect(result.files.totalBytes <= 400_000)
+        #expect(result.bytes == result.files.totalBytes)
+    }
+}
+
+private struct PlainSource: PageImageSource {
+    private let images: [PageID: CGImage]
+
+    init(pages: [Page], detailed: Bool = false) {
+        var prepared: [PageID: CGImage] = [:]
+        for page in pages {
+            prepared[page.id] = detailed
+                ? ImageFactory.noisy(width: 1200, height: 1600)
+                : ImageFactory.halves(width: 500, height: 650)
+        }
+        images = prepared
+    }
+
+    func image(for id: PageID) async throws -> CGImage {
         guard let image = images[id] else { throw PageStoreError.pageNotFound(id) }
         return image
     }
