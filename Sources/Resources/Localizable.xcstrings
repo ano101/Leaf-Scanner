@@ -6009,67 +6009,67 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Повернуть влево"
+            "value": "Влево"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Rotate left"
+            "value": "Left"
           }
         },
         "kk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Солға бұру"
+            "value": "Солға"
           }
         },
         "uk": {
           "stringUnit": {
             "state": "translated",
-            "value": "Повернути ліворуч"
+            "value": "Ліворуч"
           }
         },
         "tr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Sola döndür"
+            "value": "Sola"
           }
         },
         "de": {
           "stringUnit": {
             "state": "translated",
-            "value": "Nach links drehen"
+            "value": "Links"
           }
         },
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Pivoter à gauche"
+            "value": "Gauche"
           }
         },
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Girar a la izquierda"
+            "value": "Izquierda"
           }
         },
         "pt-BR": {
           "stringUnit": {
             "state": "translated",
-            "value": "Girar à esquerda"
+            "value": "Esquerda"
           }
         },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
-            "value": "向左旋转"
+            "value": "向左"
           }
         },
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "تدوير لليسار"
+            "value": "لليسار"
           }
         }
       }
@@ -9602,6 +9602,216 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "document.rotate.right": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вправо"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Right"
+          }
+        },
+        "kk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Оңға"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Праворуч"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sağa"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rechts"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Droite"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Derecha"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Direita"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "向右"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لليمين"
+          }
+        }
+      }
+    },
+    "common.undo": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отменить"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Undo"
+          }
+        },
+        "kk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Қайтару"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Повернути"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Geri al"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Rückgängig"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Défaire"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deshacer"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Desfazer"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "撤销"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تراجع"
+          }
+        }
+      }
+    },
+    "document.saved.hint": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сохраняется сразу"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Saved automatically"
+          }
+        },
+        "kk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Бірден сақталады"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Зберігається одразу"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Anında kaydedilir"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wird sofort gesichert"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enregistré aussitôt"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se guarda al instante"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Salvo na hora"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "更改即时保存"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "يُحفظ فورًا"
           }
         }
       }

@@ -134,34 +134,41 @@ public struct DocumentView: View {
     }
 
     private var editingTools: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 10) {
             if let page = currentPage {
                 LookStrip(page: page, selected: page.look, cache: services.renders) { look in
                     Task { await model.setLook(look, for: page.id) }
                 }
             }
 
-            HStack(spacing: 10) {
-                Button {
+            HStack(spacing: 8) {
+                ToolButton(titleKey: "document.rotate.left", systemImage: "rotate.left") {
                     Task { await rotate(left: true) }
-                } label: {
-                    Label("document.rotate.left", systemImage: "rotate.left")
                 }
 
-                Button {
+                ToolButton(titleKey: "document.rotate.right", systemImage: "rotate.right") {
                     Task { await rotate(left: false) }
-                } label: {
-                    Label("document.rotate", systemImage: "rotate.right")
                 }
 
-                Button {
+                ToolButton(titleKey: "document.redact", systemImage: "eye.slash") {
                     if let page = currentPage { redactedPage = page.id }
-                } label: {
-                    Label("document.redact", systemImage: "eye.slash")
+                }
+
+                ToolButton(
+                    titleKey: "common.undo",
+                    systemImage: "arrow.uturn.backward",
+                    isEnabled: model.canUndo
+                ) {
+                    Task { await undoLastChange() }
                 }
             }
-            .buttonStyle(.secondaryAccent)
-            .labelStyle(.iconOnly)
+
+            // Вместо кнопки «Сохранить», которая ничего бы не делала:
+            // правки записываются сразу, и человеку нужно знать это, а не
+            // нажимать лишнее. Вопрос снимается одной строкой навсегда.
+            Text("document.saved.hint")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
         }
         .padding(.vertical, 10)
         .frame(maxWidth: .infinity)
@@ -218,47 +225,59 @@ public struct DocumentView: View {
 
     @ToolbarContentBuilder
     private var toolbar: some ToolbarContent {
-        ToolbarItem(placement: .topBarTrailing) {
-            Picker("document.mode", selection: $mode) {
-                Image(systemName: "eye").tag(Mode.viewing)
-                Image(systemName: "slider.horizontal.3").tag(Mode.editing)
-                Image(systemName: "square.grid.2x2").tag(Mode.pages)
+        // Правка — состояние с началом и концом. Пока она идёт, переключатель
+        // режимов убран: он предлагал бы уйти в сторону вместо того, чтобы
+        // закончить начатое.
+        if mode == .editing {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button("common.done") {
+                    withAnimation(.snappy) { mode = .viewing }
+                }
+                .font(.body.weight(.semibold))
             }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .frame(width: 132)
-        }
-
-        ToolbarItem(placement: .topBarTrailing) {
-            Menu {
-                Button {
-                    draftName = model.document.name
-                    isRenaming = true
-                } label: {
-                    Label("document.rename", systemImage: "pencil")
+        } else {
+            ToolbarItem(placement: .topBarTrailing) {
+                Picker("document.mode", selection: $mode) {
+                    Image(systemName: "eye").tag(Mode.viewing)
+                    Image(systemName: "slider.horizontal.3").tag(Mode.editing)
+                    Image(systemName: "square.grid.2x2").tag(Mode.pages)
                 }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .frame(width: 132)
+            }
 
-                if mode == .pages {
-                    Button {
-                        isSelecting.toggle()
-                        if isSelecting == false { model.selection = [] }
-                    } label: {
-                        Label(isSelecting ? "common.selection.done" : "common.select",
-                              systemImage: "checkmark.circle")
-                    }
-                }
-
+            ToolbarItem(placement: .topBarTrailing) {
                 Menu {
-                    ForEach(PageLook.allCases, id: \.self) { look in
-                        Button(LocalizedStringKey(look.titleKey)) {
-                            Task { await model.setLookForAllPages(look) }
+                    Button {
+                        draftName = model.document.name
+                        isRenaming = true
+                    } label: {
+                        Label("document.rename", systemImage: "pencil")
+                    }
+
+                    if mode == .pages {
+                        Button {
+                            isSelecting.toggle()
+                            if isSelecting == false { model.selection = [] }
+                        } label: {
+                            Label(isSelecting ? "common.selection.done" : "common.select",
+                                  systemImage: "checkmark.circle")
                         }
                     }
+
+                    Menu {
+                        ForEach(PageLook.allCases, id: \.self) { look in
+                            Button(LocalizedStringKey(look.titleKey)) {
+                                Task { await model.setLookForAllPages(look) }
+                            }
+                        }
+                    } label: {
+                        Label("document.look.all", systemImage: "wand.and.stars")
+                    }
                 } label: {
-                    Label("document.look.all", systemImage: "wand.and.stars")
+                    Label("common.more", systemImage: "ellipsis.circle")
                 }
-            } label: {
-                Label("common.more", systemImage: "ellipsis.circle")
             }
         }
     }
@@ -277,6 +296,15 @@ public struct DocumentView: View {
 
     private var currentPage: Page? {
         model.pages.first { $0.id == current } ?? model.pages.first
+    }
+
+    /// После отката пересчитываются все страницы: откат мог вернуть не ту,
+    /// что открыта сейчас, и прежняя картинка всплыла бы при листании.
+    private func undoLastChange() async {
+        await model.undo()
+        for page in model.pages {
+            await services.renders.forget(page.id)
+        }
     }
 
     private func rotate(left: Bool) async {

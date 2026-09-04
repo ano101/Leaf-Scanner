@@ -16,9 +16,37 @@ public final class DocumentModel {
 
     private let documents: any DocumentRepositoryProtocol
 
+    /// Прошлые состояния документа.
+    ///
+    /// Правки записываются мгновенно, и кнопка «сохранить» человеку не нужна.
+    /// Нужна обратная — «верните как было»: при мгновенном сохранении именно
+    /// её отсутствие пугает, а не отсутствие сохранения.
+    private var history: [Document] = []
+
+    /// Предел глубины отката. Хранить всю историю правок документа
+    /// на сотню страниц значило бы держать в памяти сотню его копий.
+    private static let historyDepth = 20
+
+    public var canUndo: Bool { history.isEmpty == false }
+
     public init(document: Document, documents: any DocumentRepositoryProtocol) {
         self.document = document
         self.documents = documents
+    }
+
+    public func undo() async {
+        guard let previous = history.popLast() else { return }
+
+        do {
+            try await documents.save(previous)
+            document = previous
+            state = .ready
+        } catch {
+            // Откат не удался — возвращаем шаг в историю, иначе человек
+            // потеряет возможность отыграть его во второй раз.
+            history.append(previous)
+            state = .failed(messageKey: "document.error.save")
+        }
     }
 
     public var pages: [Page] {
@@ -145,6 +173,13 @@ public final class DocumentModel {
         }
     }
 
+    private func remember(_ snapshot: Document) {
+        history.append(snapshot)
+        if history.count > Self.historyDepth {
+            history.removeFirst()
+        }
+    }
+
     public func split(after index: Int, tailName: String) async -> Document? {
         do {
             let result = try await documents.split(document.id, after: index, tailName: tailName)
@@ -167,6 +202,7 @@ public final class DocumentModel {
 
         do {
             try await documents.save(edited)
+            remember(document)
             document = edited
             state = .ready
         } catch {

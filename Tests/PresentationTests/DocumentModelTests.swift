@@ -191,3 +191,80 @@ struct PageSelectionTests {
         #expect(model.pages.allSatisfy { $0.look == .blackAndWhite })
     }
 }
+
+@Suite("Откат правок")
+@MainActor
+struct DocumentUndoTests {
+    private func makeModel(pageCount: Int = 2) async throws -> (DocumentModel, DocumentRepository) {
+        let repository = DocumentRepository(database: try AppDatabase.inMemory())
+        let document = Document(name: "Договор", pages: PageFactory.pages(count: pageCount))
+        try await repository.save(document)
+        return (DocumentModel(document: document, documents: repository), repository)
+    }
+
+    @Test("до первой правки откатывать нечего")
+    func nothingToUndoBeforeTheFirstChange() async throws {
+        let (model, _) = try await makeModel()
+
+        #expect(model.canUndo == false)
+        await model.undo()
+        #expect(model.pages.allSatisfy { $0.rotation == Rotation.none })
+    }
+
+    @Test("откат возвращает страницу в прежнее положение")
+    func undoBringsThePageBack() async throws {
+        let (model, repository) = try await makeModel()
+        let id = try #require(model.pages.first?.id)
+        await model.rotateRight(id)
+        #expect(model.canUndo)
+
+        await model.undo()
+
+        #expect(model.pages.first?.rotation == Rotation.none)
+        let stored = try #require(try await repository.document(model.document.id))
+        #expect(stored.pages.first?.rotation == Rotation.none)
+    }
+
+    @Test("откат снимает правки по одной, а не все разом")
+    func undoStepsBackOneChangeAtATime() async throws {
+        let (model, _) = try await makeModel()
+        let id = try #require(model.pages.first?.id)
+        await model.rotateRight(id)
+        await model.rotateRight(id)
+
+        await model.undo()
+
+        #expect(model.pages.first?.rotation == .right)
+        #expect(model.canUndo)
+    }
+
+    @Test("после отката всех правок откатывать снова нечего")
+    func afterUndoingEverythingThereIsNothingLeft() async throws {
+        let (model, _) = try await makeModel()
+        let id = try #require(model.pages.first?.id)
+        await model.rotateRight(id)
+
+        await model.undo()
+
+        #expect(model.canUndo == false)
+    }
+
+    @Test("откат работает и для вида, и для замазки, а не только для поворота")
+    func undoCoversLookAndRedactionToo() async throws {
+        let (model, _) = try await makeModel()
+        let id = try #require(model.pages.first?.id)
+
+        await model.setLook(.blackAndWhite, for: id)
+        await model.addRedaction(
+            RedactionArea(rect: NormalizedRect(x: 0.1, y: 0.1, width: 0.2, height: 0.1)),
+            to: id
+        )
+
+        await model.undo()
+        #expect(model.pages.first?.redactions.isEmpty == true)
+        #expect(model.pages.first?.look == .blackAndWhite)
+
+        await model.undo()
+        #expect(model.pages.first?.look == .color)
+    }
+}

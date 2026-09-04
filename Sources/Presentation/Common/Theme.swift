@@ -123,3 +123,40 @@ struct SecondaryAccentButtonStyle: ButtonStyle {
 extension ButtonStyle where Self == SecondaryAccentButtonStyle {
     static var secondaryAccent: SecondaryAccentButtonStyle { SecondaryAccentButtonStyle() }
 }
+
+/// Инструмент с подписью.
+///
+/// Значок без подписи заставляет угадывать, а угадывать человек не станет —
+/// он просто не нажмёт. Подпись стоит одной строки высоты и снимает вопрос
+/// навсегда.
+struct ToolButton: View {
+    let titleKey: LocalizedStringKey
+    let systemImage: String
+    var isEnabled = true
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 4) {
+                Image(systemName: systemImage)
+                    .font(.title3)
+                    .frame(height: 24)
+
+                Text(titleKey)
+                    .font(.caption2)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            }
+            .frame(minWidth: 66)
+            .padding(.vertical, 8)
+            .padding(.horizontal, 6)
+            .foregroundStyle(isEnabled ? Theme.accent : Color.secondary)
+            .background(
+                Theme.accent.opacity(isEnabled ? 0.12 : 0.06),
+                in: RoundedRectangle(cornerRadius: 12)
+            )
+        }
+        .buttonStyle(.plain)
+        .disabled(isEnabled == false)
+    }
+}
