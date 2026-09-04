@@ -171,7 +171,7 @@ struct PageEditorView: View {
 
                 Menu {
                     ForEach(PageFilter.allCases, id: \.self) { filter in
-                        Button(LocalizedStringKey("filter.\(filter.rawValue)")) {
+                        Button(LocalizedStringKey(filter.titleKey)) {
                             Task { await model.setFilter(filter, for: pageID) }
                         }
                     }

@@ -108,6 +108,16 @@ public struct ArchiveView: View {
             ) {
                 Button("common.close", role: .cancel) {}
             }
+            // Показ камеры висит на корне экрана, а не на нижней панели.
+            // Панель скрыта, пока архив пуст, — и раньше первое в жизни
+            // нажатие «Сканировать» не открывало ничего: экран, которому
+            // полагалось появиться, не существовал в этот момент.
+            .fullScreenCover(isPresented: Binding(
+                get: { services.scanner.isPresenting },
+                set: { if $0 == false { services.scanner.fail(with: ScanError.cancelled) } }
+            )) {
+                DocumentCamera(source: services.scanner).ignoresSafeArea()
+            }
             .task { await model.load() }
             .refreshable { await model.load() }
     }
@@ -231,12 +241,6 @@ public struct ArchiveView: View {
         .padding(.horizontal, 16)
         .padding(.bottom, 8)
         .background(.bar)
-        .fullScreenCover(isPresented: Binding(
-            get: { services.scanner.isPresenting },
-            set: { if $0 == false { services.scanner.fail(with: ScanError.cancelled) } }
-        )) {
-            DocumentCamera(source: services.scanner).ignoresSafeArea()
-        }
     }
 
     private func importPhotos(_ items: [PhotosPickerItem]) async {

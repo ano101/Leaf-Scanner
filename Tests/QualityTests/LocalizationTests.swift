@@ -121,15 +121,17 @@ struct LocalizationTests {
 
         for (path, text) in try swiftSources() {
             for match in text.matches(of: callPattern) {
-                let key = keyPart(of: String(match.output[1].substring ?? "")) 
-                guard key.contains(keyPattern) || key.hasSuffix(".") else { continue }
+                let literal = String(match.output[1].substring ?? "")
+                let key = keyPart(of: literal)
+                guard key.isEmpty == false else { continue }
 
-                // Ключ с подстановкой лежит в каталоге вместе с ней,
-                // а ключ-основа — вместе со своими значениями.
-                let exists = known.contains(key)
-                    || known.contains { $0.hasPrefix(key + " %") }
-                    || (key.hasSuffix(".") && known.contains { $0.hasPrefix(key) })
-                #expect(exists, "в \(path) ключа \(key) нет в каталоге")
+                // Подстановка внутри литерала не собирает ключ по кусочкам:
+                // SwiftUI разбирает такой литерал как строку формата и ищет
+                // ключ вида «filter.%@». Поэтому в каталоге обязан лежать
+                // именно ключ с подстановкой, а не набор его значений.
+                // Послабление здесь однажды уже скрыло непереведённое меню.
+                let exists = known.contains(key) || known.contains { $0.hasPrefix(key + " %") }
+                #expect(exists, "в \(path) ключа «\(literal)» нет в каталоге")
             }
         }
     }
