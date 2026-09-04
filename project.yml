@@ -42,6 +42,15 @@ targets:
         CFBundleLocalizations:
           - ru
           - en
+          - kk
+          - uk
+          - tr
+          - de
+          - fr
+          - es
+          - pt-BR
+          - zh-Hans
+          - ar
         CFBundleDevelopmentRegion: ru
         CFBundleShortVersionString: "1.0"
         CFBundleVersion: "1"

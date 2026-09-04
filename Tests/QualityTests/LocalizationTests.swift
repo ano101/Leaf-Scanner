@@ -60,14 +60,20 @@ struct LocalizationTests {
         return found
     }
 
-    @Test("каждый ключ переведён на русский и английский")
-    func everyKeyIsTranslatedIntoBothLanguages() throws {
+    /// Языки перечислены здесь, а не собираются из каталога: иначе
+    /// проверка молча согласилась бы с языком, забытым в новом ключе.
+    static let languages = [
+        "ru", "en", "kk", "uk", "tr", "de", "fr", "es", "pt-BR", "zh-Hans", "ar",
+    ]
+
+    @Test("каждый ключ переведён на все языки приложения")
+    func everyKeyIsTranslatedIntoEveryLanguage() throws {
         let catalog = try loadCatalog()
 
         #expect(catalog.strings.isEmpty == false)
 
         for (key, entry) in catalog.strings {
-            for language in ["ru", "en"] {
+            for language in Self.languages {
                 guard let localization = entry.localizations[language] else {
                     Issue.record("ключ \(key) не переведён на \(language)")
                     continue
@@ -132,6 +138,52 @@ struct LocalizationTests {
                 // Послабление здесь однажды уже скрыло непереведённое меню.
                 let exists = known.contains(key) || known.contains { $0.hasPrefix(key + " %") }
                 #expect(exists, "в \(path) ключа «\(literal)» нет в каталоге")
+            }
+        }
+    }
+
+    @Test("список языков совпадает с объявленным в проекте")
+    func languageListMatchesTheProjectDeclaration() throws {
+        let projectURL = Self.sourceRoot.deletingLastPathComponent().appendingPathComponent("project.yml")
+        let project = try String(contentsOf: projectURL, encoding: .utf8)
+
+        for language in Self.languages {
+            #expect(
+                project.contains("- \(language)\n"),
+                "язык \(language) переведён, но не объявлен в project.yml"
+            )
+        }
+    }
+
+    @Test("подстановки не теряются при переводе")
+    func placeholdersSurviveTranslation() throws {
+        // Потерянная подстановка — это не опечатка, а падение при показе
+        // строки: система ждёт значение, которого в переводе нет.
+        for (key, entry) in try loadCatalog().strings {
+            let expected = key.contains("%@") ? "%@" : (key.contains("%lld") ? "%lld" : nil)
+            guard let expected else { continue }
+
+            for (language, localization) in entry.localizations {
+                if let plain = localization.stringUnit?.value {
+                    #expect(
+                        plain.contains(expected),
+                        "в переводе ключа \(key) на \(language) потеряна подстановка \(expected)"
+                    )
+                }
+
+                // Формы «ноль», «один» и «два» законно обходятся без числа:
+                // по-арабски «صفحة واحدة» и есть «одна страница», а цифра
+                // рядом с ней читалась бы как ошибка перевода.
+                let mustCarryNumber = ["few", "many", "other"]
+                for form in mustCarryNumber {
+                    guard let value = localization.variations?.plural?[form]?.stringUnit?.value else {
+                        continue
+                    }
+                    #expect(
+                        value.contains(expected),
+                        "в форме «\(form)» ключа \(key) на \(language) потеряна подстановка"
+                    )
+                }
             }
         }
     }
