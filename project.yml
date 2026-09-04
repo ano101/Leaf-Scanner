@@ -23,7 +23,14 @@ settings:
     CODE_SIGNING_ALLOWED: YES
     CODE_SIGN_STYLE: Automatic
     DEVELOPMENT_TEAM: 8JKKU63BYJ
-    CODE_SIGN_IDENTITY: "Apple Development"
+  # Отладочная сборка подписывается сертификатом разработчика, сборка
+  # для магазина — сертификатом распространения. Одна подпись на оба случая
+  # не годится: App Store принимает только вторую.
+  configs:
+    Debug:
+      CODE_SIGN_IDENTITY: "Apple Development"
+    Release:
+      CODE_SIGN_IDENTITY: "Apple Distribution"
 
 targets:
   Leaf:
@@ -57,6 +64,14 @@ targets:
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        # На iPad обязательны все четыре положения: без перевёрнутого
+        # система не даёт работать в многозадачности, и App Store
+        # отклоняет сборку ещё до проверки человеком.
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
         NSCameraUsageDescription: Камера нужна, чтобы сканировать документы. Снимки остаются на устройстве.
