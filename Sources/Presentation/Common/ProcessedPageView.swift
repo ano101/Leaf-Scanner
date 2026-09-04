@@ -15,19 +15,28 @@ struct ProcessedPageView: View {
     @State private var image: CGImage?
 
     var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: Theme.pageCorner)
-                .fill(Theme.paper)
-
+        // Подложка повторяет форму самой страницы, а не отведённой ей
+        // клетки: повёрнутый лист становится альбомным, и подложка
+        // в портретной клетке оставляла бы вокруг него белое поле,
+        // из-за которого страница выглядела потерянной.
+        Group {
             if let image {
                 Image(decorative: image, scale: 1)
                     .resizable()
                     .scaledToFit()
+                    .background(Theme.paper)
                     .clipShape(RoundedRectangle(cornerRadius: Theme.pageCorner))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: Theme.pageCorner)
+                            .strokeBorder(.separator, lineWidth: 0.5)
+                    }
             } else {
-                ProgressView()
+                RoundedRectangle(cornerRadius: Theme.pageCorner)
+                    .fill(Theme.paper)
+                    .overlay { ProgressView() }
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .task(id: identity) {
             image = await cache.image(for: page, look: look, maxSide: maxSide)
         }

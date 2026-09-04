@@ -23,8 +23,11 @@ struct PageGridView: View {
     private func cell(page: Page, number: Int) -> some View {
         VStack(spacing: 6) {
             ZStack(alignment: .topLeading) {
+                // Высота клетки задана, а страница вписывается в неё
+                // по центру: и портретный, и повёрнутый лист занимают
+                // одинаковое место, и сетка не прыгает при повороте.
                 ProcessedPageView(page: page, look: page.look, cache: services.renders, maxSide: 400)
-                    .aspectRatio(0.72, contentMode: .fit)
+                    .frame(height: 150)
 
                 if isSelecting {
                     Image(systemName: model.selection.contains(page.id)

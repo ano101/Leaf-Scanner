@@ -21,6 +21,7 @@ struct LookStrip: View {
                         VStack(spacing: 6) {
                             ProcessedPageView(page: page, look: look, cache: cache, maxSide: 220)
                                 .frame(width: 62, height: 82)
+                                .contentShape(Rectangle())
                                 .overlay {
                                     RoundedRectangle(cornerRadius: Theme.pageCorner)
                                         .strokeBorder(

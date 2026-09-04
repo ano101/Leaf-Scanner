@@ -42,48 +42,12 @@ public struct ArchiveView: View {
             .onChange(of: model.query) { _, _ in
                 Task { await model.runSearch() }
             }
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
-                        Button {
-                            newFolderName = ""
-                            isCreatingFolder = true
-                        } label: {
-                            Label("archive.folder.new", systemImage: "folder.badge.plus")
-                        }
-
-                        Button {
-                            isSelecting.toggle()
-                            if isSelecting == false { model.selection = [] }
-                        } label: {
-                            Label(isSelecting ? "common.selection.done" : "common.select",
-                                  systemImage: "checkmark.circle")
-                        }
-
-                        Divider()
-
-                        Button {
-                            isShowingSettings = true
-                        } label: {
-                            Label("settings.title", systemImage: "gearshape")
-                        }
-
-                        Divider()
-
-                        Button {
-                            isPickingPhotos = true
-                        } label: {
-                            Label("archive.import.photos", systemImage: "photo.on.rectangle")
-                        }
-
-                        Button {
-                            isChoosingFile = true
-                        } label: {
-                            Label("archive.import.files", systemImage: "folder")
-                        }
-                    } label: {
-                        Label("common.more", systemImage: "ellipsis.circle")
-                    }
+            .toolbar { toolbar }
+            .safeAreaInset(edge: .bottom) {
+                if isSelecting {
+                    selectionActions
+                } else if model.isEmpty == false || model.isSearching {
+                    scanButton
                 }
             }
             .photosPicker(
@@ -104,6 +68,24 @@ public struct ArchiveView: View {
                 guard items.isEmpty == false else { return }
                 Task { await importPhotos(items) }
             }
+            // Показ камеры висит на корне экрана, а не на нижней панели.
+            // Панель скрыта, пока архив пуст, — и раньше первое в жизни
+            // нажатие «Сканировать» не открывало ничего: экран, которому
+            // полагалось появиться, в этот момент не существовал.
+            .fullScreenCover(isPresented: Binding(
+                get: { services.scanner.isPresenting },
+                set: { if $0 == false { services.scanner.fail(with: ScanError.cancelled) } }
+            )) {
+                DocumentCamera(source: services.scanner).ignoresSafeArea()
+            }
+            .sheet(isPresented: $isShowingSettings) {
+                NavigationStack {
+                    SettingsView(settings: services.settings, lock: services.lock)
+                }
+            }
+            .navigationDestination(item: $openedDocument) { document in
+                DocumentView(document: document, services: services)
+            }
             .alert(
                 "archive.import.failed",
                 isPresented: Binding(
@@ -113,22 +95,73 @@ public struct ArchiveView: View {
             ) {
                 Button("common.close", role: .cancel) {}
             }
-            // Показ камеры висит на корне экрана, а не на нижней панели.
-            // Панель скрыта, пока архив пуст, — и раньше первое в жизни
-            // нажатие «Сканировать» не открывало ничего: экран, которому
-            // полагалось появиться, не существовал в этот момент.
-            .fullScreenCover(isPresented: Binding(
-                get: { services.scanner.isPresenting },
-                set: { if $0 == false { services.scanner.fail(with: ScanError.cancelled) } }
-            )) {
-                DocumentCamera(source: services.scanner).ignoresSafeArea()
-            }
             .task { await model.load() }
             .refreshable { await model.load() }
     }
 
+    @ToolbarContentBuilder
+    private var toolbar: some ToolbarContent {
+        ToolbarItem(placement: .topBarTrailing) {
+            Menu {
+                Button {
+                    newFolderName = ""
+                    isCreatingFolder = true
+                } label: {
+                    Label("archive.folder.new", systemImage: "folder.badge.plus")
+                }
+
+                Button {
+                    isSelecting.toggle()
+                    if isSelecting == false { model.selection = [] }
+                } label: {
+                    Label(isSelecting ? "common.selection.done" : "common.select",
+                          systemImage: "checkmark.circle")
+                }
+
+                Divider()
+
+                Button {
+                    isShowingSettings = true
+                } label: {
+                    Label("settings.title", systemImage: "gearshape")
+                }
+
+                Divider()
+
+                Button {
+                    isPickingPhotos = true
+                } label: {
+                    Label("archive.import.photos", systemImage: "photo.on.rectangle")
+                }
+
+                Button {
+                    isChoosingFile = true
+                } label: {
+                    Label("archive.import.files", systemImage: "folder")
+                }
+            } label: {
+                Label("common.more", systemImage: "ellipsis.circle")
+            }
+        }
+    }
+
+    /// Диалог создания папки висит на содержимом, а не на корне экрана.
+    /// Несколько диалогов на одном представлении перекрывают друг друга —
+    /// работает последний, а остальные молча не открываются.
     @ViewBuilder
     private var content: some View {
+        stateContent
+            .alert("archive.folder.new", isPresented: $isCreatingFolder) {
+                TextField("archive.folder.name", text: $newFolderName)
+                Button("common.cancel", role: .cancel) {}
+                Button("common.create") {
+                    Task { await model.createFolder(named: newFolderName) }
+                }
+            }
+    }
+
+    @ViewBuilder
+    private var stateContent: some View {
         switch model.state {
         case .loading:
             ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -278,6 +311,16 @@ public struct ArchiveView: View {
         .padding(.horizontal, 16)
         .padding(.bottom, 8)
         .background(.bar)
+        .alert("archive.merge", isPresented: $isMerging) {
+            TextField("archive.merge.name", text: $mergeName)
+            Button("common.cancel", role: .cancel) {}
+            Button("archive.merge") {
+                Task {
+                    await model.mergeSelection(into: mergeName)
+                    isSelecting = false
+                }
+            }
+        }
     }
 
     private func importPhotos(_ items: [PhotosPickerItem]) async {
