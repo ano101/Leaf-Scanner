@@ -6,3 +6,5 @@ build/
 .swiftpm/
 xcuserdata/
 .venv-asc/
+DerivedDataShots/
+Support/Info.plist
