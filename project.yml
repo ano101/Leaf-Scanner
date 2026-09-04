@@ -17,12 +17,13 @@ settings:
     SWIFT_STRICT_CONCURRENCY: complete
     SWIFT_UPCOMING_FEATURE_EXISTENTIAL_ANY: YES
     ENABLE_USER_SCRIPT_SANDBOXING: YES
-    # Подпись «Sign to Run Locally»: без неё codesign не запускается вовсе,
-    # и права цели не попадают в подписанный пакет.
+    # Подпись включена всегда: без неё codesign не запускается вовсе,
+    # и права цели не попадают в подписанный пакет. Для симулятора Xcode
+    # подписывает локально сам, для телефона берёт профиль команды.
     CODE_SIGNING_ALLOWED: YES
-    CODE_SIGN_IDENTITY: "-"
-    CODE_SIGN_STYLE: Manual
-    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: 8JKKU63BYJ
+    CODE_SIGN_IDENTITY: "Apple Development"
 
 targets:
   Leaf:
@@ -50,6 +51,7 @@ targets:
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
         NSCameraUsageDescription: Камера нужна, чтобы сканировать документы. Снимки остаются на устройстве.
+        NSPhotoLibraryUsageDescription: Доступ к фотографиям нужен, чтобы взять уже снятые документы. Снимки остаются на устройстве.
         NSFaceIDUsageDescription: Face ID закрывает доступ к вашему архиву документов.
         ITSAppUsesNonExemptEncryption: false
     settings:
