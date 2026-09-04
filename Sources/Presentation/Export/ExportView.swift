@@ -138,10 +138,8 @@ public struct ExportView: View {
                         Task { await model.acceptSuggestion() }
                     } label: {
                         Text("export.suggestion.accept")
-                            .font(.body.weight(.semibold))
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(Theme.accent)
+                    .buttonStyle(.prominentAccentCompact)
                 }
 
             case let .impossible(bestBytes, _):

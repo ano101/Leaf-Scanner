@@ -150,7 +150,7 @@ public struct ArchiveView: View {
                             ArchiveView(services: services, folderID: folder.id, title: folder.name)
                         } label: {
                             Label {
-                                Text(folder.name).documentTitleStyle()
+                                PlainTitle(folder.name).font(.headline)
                             } icon: {
                                 Image(systemName: "folder.fill").foregroundStyle(Theme.accent)
                             }
@@ -198,7 +198,7 @@ public struct ArchiveView: View {
         } else {
             List(model.hits) { hit in
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(hit.documentName).documentTitleStyle()
+                    PlainTitle(hit.documentName).font(.headline)
                     Text(hit.snippet).documentSubtitleStyle()
                 }
                 .padding(.vertical, 2)
@@ -213,12 +213,8 @@ public struct ArchiveView: View {
                 Task { await scan(duplex: false) }
             } label: {
                 Label("archive.scan", systemImage: "doc.viewfinder")
-                    .font(.body.weight(.semibold))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(Theme.accent)
+            .buttonStyle(.prominentAccent)
 
             Button {
                 Task { await scan(duplex: true) }
@@ -285,8 +281,12 @@ public struct ArchiveView: View {
             try await services.documents.save(document)
             await model.load()
 
-            Task.detached(priority: .utility) { [services] in
+            // Разбор идёт в фоне, но его итог виден сразу, как только готов:
+            // имя, уточнённое по заголовку, не должно ждать перезапуска
+            // приложения — человек решит, что уточнение не работает.
+            Task(priority: .utility) { [services] in
                 try? await services.recognition.process(documentID: document.id)
+                await model.load()
             }
         } catch {
             importFailureKey = "archive.import.failed"
@@ -314,9 +314,11 @@ public struct ArchiveView: View {
             try await services.documents.save(document)
             await model.load()
 
-            // Разбор текста идёт после того, как документ уже виден.
-            Task.detached(priority: .utility) { [services] in
+            // Разбор текста идёт после того, как документ уже виден,
+            // а список обновляется, когда разбор закончен.
+            Task(priority: .utility) { [services] in
                 try? await services.recognition.process(documentID: document.id)
+                await model.load()
             }
         } catch {
             // Отмена съёмки — обычное действие человека, а не сбой.
@@ -341,7 +343,7 @@ struct DocumentRow: View {
             .frame(width: 44, height: 58)
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(document.name).documentTitleStyle()
+                PlainTitle(document.name).font(.headline)
                 Text("archive.pages \(document.pageCount)").documentSubtitleStyle()
             }
 

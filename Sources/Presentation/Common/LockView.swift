@@ -26,12 +26,8 @@ struct LockView: View {
                 Task { await lock.unlock() }
             } label: {
                 Text("lock.unlock")
-                    .font(.body.weight(.semibold))
-                    .padding(.horizontal, 18)
-                    .padding(.vertical, 8)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(Theme.accent)
+            .buttonStyle(.prominentAccentCompact)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

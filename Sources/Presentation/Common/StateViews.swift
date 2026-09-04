@@ -27,12 +27,8 @@ struct EmptyStateView: View {
 
             Button(action: action) {
                 Text(actionKey)
-                    .font(.body.weight(.semibold))
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 10)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(Theme.accent)
+            .buttonStyle(.prominentAccentCompact)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

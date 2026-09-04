@@ -126,12 +126,8 @@ public struct DocumentView: View {
             isExporting = true
         } label: {
             Label("document.export", systemImage: "square.and.arrow.up")
-                .font(.body.weight(.semibold))
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 12)
         }
-        .buttonStyle(.borderedProminent)
-        .tint(Theme.accent)
+        .buttonStyle(.prominentAccent)
         .padding(.horizontal, 16)
         .padding(.bottom, 8)
         .background(.bar)
