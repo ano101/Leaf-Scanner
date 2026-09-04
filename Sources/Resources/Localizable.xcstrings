@@ -183,13 +183,13 @@
         "ru": {
           "stringUnit": {
             "state": "translated",
-            "value": "Снять обе стороны"
+            "value": "Обе стороны"
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Scan both sides"
+            "value": "Both sides"
           }
         }
       }
@@ -1378,6 +1378,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Draw over anything you want removed for good."
+          }
+        }
+      }
+    },
+    "common.more": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ещё"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More"
           }
         }
       }

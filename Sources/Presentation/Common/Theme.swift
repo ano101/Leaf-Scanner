@@ -100,3 +100,26 @@ extension ButtonStyle where Self == ProminentAccentButtonStyle {
         ProminentAccentButtonStyle(fillsWidth: false)
     }
 }
+
+/// Второе по важности действие рядом с главным: та же форма и те же поля,
+/// но тише по цвету. Одинаковые поля важны — при разных кнопка рядом
+/// выглядит перекошенной.
+struct SecondaryAccentButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.body.weight(.medium))
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
+            .allowsTightening(true)
+            .dynamicTypeSize(...DynamicTypeSize.accessibility2)
+            .foregroundStyle(Theme.accent)
+            .padding(.vertical, 12)
+            .padding(.horizontal, 16)
+            .background(Theme.accent.opacity(0.14), in: Capsule())
+            .opacity(configuration.isPressed ? 0.7 : 1)
+    }
+}
+
+extension ButtonStyle where Self == SecondaryAccentButtonStyle {
+    static var secondaryAccent: SecondaryAccentButtonStyle { SecondaryAccentButtonStyle() }
+}

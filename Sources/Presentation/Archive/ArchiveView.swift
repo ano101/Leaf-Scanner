@@ -8,6 +8,7 @@ public struct ArchiveView: View {
     @State private var openedDocument: Document?
     @State private var photoSelection: [PhotosPickerItem] = []
     @State private var isChoosingFile = false
+    @State private var isPickingPhotos = false
     @State private var importFailureKey: String?
 
     private let services: AppServices
@@ -50,43 +51,27 @@ public struct ArchiveView: View {
                         Divider()
 
                         Button {
+                            isPickingPhotos = true
+                        } label: {
+                            Label("archive.import.photos", systemImage: "photo.on.rectangle")
+                        }
+
+                        Button {
                             isChoosingFile = true
                         } label: {
                             Label("archive.import.files", systemImage: "folder")
                         }
                     } label: {
-                        Image(systemName: "ellipsis.circle")
-                    }
-                }
-
-                ToolbarItem(placement: .topBarTrailing) {
-                    PhotosPicker(
-                        selection: $photoSelection,
-                        matching: .images,
-                        photoLibrary: .shared()
-                    ) {
-                        Label("archive.import.photos", systemImage: "photo.on.rectangle")
+                        Label("common.more", systemImage: "ellipsis.circle")
                     }
                 }
             }
-            .safeAreaInset(edge: .bottom) {
-                // На пустом архиве действие уже предложено в центре экрана.
-                // Две одинаковые кнопки на одном экране заставляют выбирать
-                // между ними, хотя выбора нет.
-                if model.isEmpty == false || model.isSearching {
-                    scanButton
-                }
-            }
-            .alert("archive.folder.new", isPresented: $isCreatingFolder) {
-                TextField("archive.folder.name", text: $newFolderName)
-                Button("common.cancel", role: .cancel) {}
-                Button("common.create") {
-                    Task { await model.createFolder(named: newFolderName) }
-                }
-            }
-            .navigationDestination(item: $openedDocument) { document in
-                DocumentView(document: document, services: services)
-            }
+            .photosPicker(
+                isPresented: $isPickingPhotos,
+                selection: $photoSelection,
+                matching: .images,
+                photoLibrary: .shared()
+            )
             .fileImporter(
                 isPresented: $isChoosingFile,
                 allowedContentTypes: [.pdf, .image],
@@ -218,7 +203,7 @@ public struct ArchiveView: View {
     }
 
     private var scanButton: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 10) {
             Button {
                 Task { await scan(duplex: false) }
             } label: {
@@ -229,14 +214,9 @@ public struct ArchiveView: View {
             Button {
                 Task { await scan(duplex: true) }
             } label: {
-                Image(systemName: "doc.on.doc")
-                    .font(.body.weight(.semibold))
-                    .padding(.vertical, 12)
-                    .padding(.horizontal, 4)
+                Label("archive.scan.duplex", systemImage: "doc.on.doc")
             }
-            .buttonStyle(.bordered)
-            .tint(Theme.accent)
-            .accessibilityLabel(Text("archive.scan.duplex"))
+            .buttonStyle(.secondaryAccent)
         }
         .padding(.horizontal, 16)
         .padding(.bottom, 8)
