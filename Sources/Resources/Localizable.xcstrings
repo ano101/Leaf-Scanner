@@ -9815,6 +9815,776 @@
           }
         }
       }
+    },
+    "privacy.title": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Конфиденциальность"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Privacy"
+          }
+        },
+        "kk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Құпиялылық"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Конфіденційність"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gizlilik"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Datenschutz"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Confidentialité"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Privacidad"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Privacidade"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "隐私"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الخصوصية"
+          }
+        }
+      }
+    },
+    "privacy.lead": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Приложение не собирает о вас никаких данных."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This app collects no data about you."
+          }
+        },
+        "kk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Қолданба сіз туралы ешқандай дерек жинамайды."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Застосунок не збирає про вас жодних даних."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bu uygulama sizinle ilgili hiçbir veri toplamaz."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese App sammelt keinerlei Daten über Sie."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cette app ne collecte aucune donnée vous concernant."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta app no recoge ningún dato sobre usted."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este app não coleta nenhum dado sobre você."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本应用不收集关于你的任何数据。"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لا يجمع هذا التطبيق أي بيانات عنك."
+          }
+        }
+      }
+    },
+    "privacy.storage.title": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Где лежат документы"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Where your documents live"
+          }
+        },
+        "kk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Құжаттар қайда жатады"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Де лежать документи"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Belgeleriniz nerede duruyor"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wo Ihre Dokumente liegen"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Où sont vos documents"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dónde están sus documentos"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Onde ficam seus documentos"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文稿存放在哪里"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أين تُحفَظ مستنداتك"
+          }
+        }
+      }
+    },
+    "privacy.storage.text": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Только в памяти этого устройства. У приложения нет сервера и нет ни одного сетевого запроса."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only in this device's storage. The app has no server and makes no network requests at all."
+          }
+        },
+        "kk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тек осы құрылғының жадында. Қолданбада сервер де, бірде-бір желілік сұрау да жоқ."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Лише в пам’яті цього пристрою. Застосунок не має сервера й не робить жодного мережевого запиту."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yalnızca bu cihazın belleğinde. Uygulamanın sunucusu yok ve hiçbir ağ isteği yapmıyor."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nur im Speicher dieses Geräts. Die App hat keinen Server und stellt keine einzige Netzwerkanfrage."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uniquement dans la mémoire de cet appareil. L’app n’a pas de serveur et ne fait aucune requête réseau."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Solo en la memoria de este dispositivo. La app no tiene servidor ni hace ninguna petición de red."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Somente na memória deste aparelho. O app não tem servidor e não faz nenhuma requisição de rede."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只在这台设备的存储里。本应用没有服务器，也不发出任何网络请求。"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "في ذاكرة هذا الجهاز فقط. لا يملك التطبيق خادمًا ولا يجري أي طلب شبكة."
+          }
+        }
+      }
+    },
+    "privacy.absent.title": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Чего в приложении нет"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What the app does not have"
+          }
+        },
+        "kk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Қолданбада не жоқ"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Чого в застосунку немає"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uygulamada olmayanlar"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Was die App nicht hat"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ce que l’app n’a pas"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lo que la app no tiene"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "O que o app não tem"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本应用没有什么"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ما لا يحتويه التطبيق"
+          }
+        }
+      }
+    },
+    "privacy.absent.text": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ни учётных записей, ни аналитики, ни рекламы, ни сторонних библиотек, которые ходят в сеть."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No accounts, no analytics, no advertising, no third-party libraries that reach the network."
+          }
+        },
+        "kk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тіркелгі де, талдау да, жарнама да, желіге шығатын бөгде кітапханалар да жоқ."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ні облікових записів, ні аналітики, ні реклами, ні сторонніх бібліотек, що ходять у мережу."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hesap yok, analitik yok, reklam yok, ağa çıkan üçüncü taraf kitaplığı yok."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keine Konten, keine Analyse, keine Werbung, keine fremden Bibliotheken, die ins Netz gehen."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ni comptes, ni analyse d’usage, ni publicité, ni bibliothèques tierces qui accèdent au réseau."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ni cuentas, ni analítica, ni publicidad, ni bibliotecas de terceros que accedan a la red."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sem contas, sem analytics, sem publicidade, sem bibliotecas de terceiros que acessem a rede."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有账号，没有统计分析，没有广告，也没有会联网的第三方库。"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لا حسابات ولا تحليلات ولا إعلانات ولا مكتبات خارجية تتصل بالشبكة."
+          }
+        }
+      }
+    },
+    "privacy.access.title": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Какие доступы нужны"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What permissions are needed"
+          }
+        },
+        "kk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Қандай рұқсаттар керек"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Які доступи потрібні"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hangi izinler gerekiyor"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Welche Berechtigungen nötig sind"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quelles autorisations sont nécessaires"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Qué permisos hacen falta"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quais permissões são necessárias"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "需要哪些权限"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ما الأذونات المطلوبة"
+          }
+        }
+      }
+    },
+    "privacy.access.text": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Камера — чтобы снимать. Фотографии — только те, которые вы выбрали сами. Face ID — чтобы закрыть вход; приложение получает лишь ответ «да» или «нет»."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Camera — to capture. Photos — only the ones you pick yourself. Face ID — to lock the archive; the app only receives a yes or no."
+          }
+        },
+        "kk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Камера — түсіру үшін. Фотосуреттер — тек өзіңіз таңдағандары. Face ID — кіруді жабу үшін; қолданба «иә» не «жоқ» жауабын ғана алады."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Камера — щоб знімати. Фотографії — лише ті, які ви обрали самі. Face ID — щоб закрити вхід; застосунок отримує тільки «так» або «ні»."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kamera — çekmek için. Fotoğraflar — yalnızca kendi seçtikleriniz. Face ID — girişi kilitlemek için; uygulama yalnızca evet ya da hayır alır."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kamera — zum Aufnehmen. Fotos — nur die, die Sie selbst auswählen. Face ID — zum Sperren; die App erhält nur ein Ja oder Nein."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Appareil photo — pour numériser. Photos — seulement celles que vous choisissez. Face ID — pour verrouiller ; l’app ne reçoit qu’un oui ou un non."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cámara — para escanear. Fotos — solo las que usted elija. Face ID — para bloquear el acceso; la app solo recibe un sí o un no."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Câmera — para digitalizar. Fotos — apenas as que você escolher. Face ID — para bloquear o acesso; o app recebe só um sim ou não."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "相机——用于扫描。照片——只有你自己选中的那些。面容 ID——用于锁定档案；应用只会得到“是”或“否”。"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الكاميرا — للمسح. الصور — فقط ما تختاره بنفسك. Face ID — لقفل الأرشيف؛ لا يتلقى التطبيق سوى نعم أو لا."
+          }
+        }
+      }
+    },
+    "privacy.outgoing.title": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Когда файл уходит наружу"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "When a file leaves the device"
+          }
+        },
+        "kk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файл қашан сыртқа шығады"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Коли файл виходить назовні"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bir dosya cihazdan ne zaman çıkar"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wann eine Datei das Gerät verlässt"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quand un fichier quitte l’appareil"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cuándo un archivo sale del dispositivo"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quando um arquivo sai do aparelho"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "文件何时会离开设备"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "متى يغادر الملف الجهاز"
+          }
+        }
+      }
+    },
+    "privacy.outgoing.text": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Только когда вы сами нажимаете «Поделиться», «Печать» или сохраняете его в «Файлы». Куда он отправится, решаете вы."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only when you tap Share, Print, or save it to Files. Where it goes is your decision."
+          }
+        },
+        "kk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тек өзіңіз «Бөлісу», «Басып шығару» дегенді бассаңыз немесе «Файлдарға» сақтасаңыз. Қайда баратынын өзіңіз шешесіз."
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Лише коли ви самі натискаєте «Поділитися», «Друк» або зберігаєте його у «Файли». Куди він піде, вирішуєте ви."
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yalnızca siz Paylaş ya da Yazdır dediğinizde veya Dosyalar’a kaydettiğinizde. Nereye gideceğine siz karar verirsiniz."
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nur wenn Sie Teilen oder Drucken antippen oder sie in Dateien sichern. Wohin sie geht, entscheiden Sie."
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Seulement quand vous touchez Partager, Imprimer, ou l’enregistrez dans Fichiers. Sa destination, c’est vous qui la choisissez."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Solo cuando usted pulsa Compartir, Imprimir o lo guarda en Archivos. Adónde va lo decide usted."
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Só quando você toca em Compartilhar, Imprimir ou salva em Arquivos. Para onde vai é decisão sua."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只有当你点了“共享”“打印”，或把它存到“文件”时。去哪里由你决定。"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "فقط عندما تضغط «مشاركة» أو «طباعة» أو تحفظه في «الملفات». وجهته قرارك أنت."
+          }
+        }
+      }
+    },
+    "privacy.updated": {
+      "localizations": {
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Редакция от 4 сентября 2026 года"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version of 4 September 2026"
+          }
+        },
+        "kk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "2026 жылғы 4 қыркүйектегі редакция"
+          }
+        },
+        "uk": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Редакція від 4 вересня 2026 року"
+          }
+        },
+        "tr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "4 Eylül 2026 sürümü"
+          }
+        },
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fassung vom 4. September 2026"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Version du 4 septembre 2026"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Versión del 4 de septiembre de 2026"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Versão de 4 de setembro de 2026"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "2026 年 9 月 4 日版本"
+          }
+        },
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "نسخة ٤ سبتمبر ٢٠٢٦"
+          }
+        }
+      }
     }
   }
 }

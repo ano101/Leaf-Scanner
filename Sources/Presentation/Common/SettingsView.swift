@@ -62,8 +62,12 @@ struct SettingsView: View {
             }
 
             Section {
-                Label("settings.privacy", systemImage: "lock.shield")
-                    .foregroundStyle(Theme.accent)
+                NavigationLink {
+                    PrivacyView()
+                } label: {
+                    Label("settings.privacy", systemImage: "lock.shield")
+                        .foregroundStyle(Theme.accent)
+                }
             } footer: {
                 Text("settings.privacy.hint")
             }
